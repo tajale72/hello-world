@@ -11,7 +11,7 @@ func main() {
 	if port == "" {
 		port = "900001" // Default port if not specified
 	}
-	http.HandleFunc("/", Hello)
+	http.HandleFunc("/hello", Hello)
 	http.ListenAndServe(port, nil)
 }
 
