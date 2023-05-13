@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func main() {
+func main1() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "900001" // Default port if not specified
@@ -15,7 +15,7 @@ func main() {
 	http.ListenAndServe(port, nil)
 }
 
-func Hello(w http.ResponseWriter, r *http.Request) {
+func Hello1(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Hello World")
 
 }

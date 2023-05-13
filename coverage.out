@@ -1,0 +1,9 @@
+mode: set
+hello-world/main.go:9.13,11.16 2 0
+hello-world/main.go:11.16,13.3 1 0
+hello-world/main.go:14.2,15.32 2 0
+hello-world/main.go:18.52,21.2 1 1
+hello-world/main1.go:9.14,11.16 2 0
+hello-world/main1.go:11.16,13.3 1 0
+hello-world/main1.go:14.2,15.32 2 0
+hello-world/main1.go:18.53,21.2 1 0
