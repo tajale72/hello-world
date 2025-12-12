@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>⚽ Saturday Soccer</title>
+
+  <style>
+    :root{
+      --border:rgba(255,255,255,.12);
+      --text:#eaf2ff;
+      --muted:rgba(234,242,255,.70);
+      --green:#24d18f;
+      --shadow:0 12px 30px rgba(0,0,0,.35);
+      --r:18px;
+      --danger:#ff4d4f;
+      --warning:#ffb020;
+      --ok:#24d18f;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: radial-gradient(1200px 600px at 20% 0%, rgba(36,209,143,.18), transparent 60%),
+                  radial-gradient(900px 500px at 80% 10%, rgba(74,144,226,.18), transparent 60%),
+                  linear-gradient(180deg, #050b18, #071224);
+      color:var(--text);
+      padding: 16px 14px 44px;
+    }
+    .wrap{ max-width:560px; margin:0 auto; }
+
+    /* BIG visible alert */
+    .alert{
+      display:none;
+      position: sticky;
+      top: 12px;
+      z-index: 40;
+      border-radius: 16px;
+      padding: 12px 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 14px 35px rgba(0,0,0,.45);
+      margin-bottom: 12px;
+      backdrop-filter: blur(8px);
+      animation: pop .18s ease-out;
+    }
+    .alert.show{ display:flex; align-items:flex-start; gap:10px; }
+    .alert .msg{ flex:1; font-weight:900; font-size:14px; line-height:1.25; }
+    .alert .sub{ display:block; margin-top:6px; font-weight:700; color:rgba(234,242,255,.80); font-size:12.5px; }
+    .alert .x{
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.10);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor:pointer;
+      font-weight: 950;
+    }
+    .alert.error{ background: rgba(255,77,79,.20); border-color: rgba(255,77,79,.45); }
+    .alert.ok{ background: rgba(36,209,143,.16); border-color: rgba(36,209,143,.45); }
+    .alert.warn{ background: rgba(255,176,32,.16); border-color: rgba(255,176,32,.45); }
+    .shake{ animation: shake .28s ease-in-out; }
+
+    @keyframes pop{
+      from{ transform: translateY(-6px); opacity:.3; }
+      to{ transform: translateY(0); opacity:1; }
+    }
+    @keyframes shake{
+      0%{ transform: translateX(0); }
+      25%{ transform: translateX(-6px); }
+      50%{ transform: translateX(6px); }
+      75%{ transform: translateX(-4px); }
+      100%{ transform: translateX(0); }
+    }
+
+    .top{
+      display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+      margin-bottom:12px;
+    }
+    .brand h1{ margin:0; font-size:22px; letter-spacing:.2px; }
+    .brand .sub{ margin-top:4px; font-size:13px; color:var(--muted); }
+    .pill{
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12.5px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    .seg{
+      display:flex; gap:10px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:6px;
+      margin:12px 0 10px;
+    }
+    .seg button{
+      flex:1;
+      border:0;
+      border-radius:999px;
+      padding:10px 10px;
+      font-weight:950;
+      cursor:pointer;
+      background:transparent;
+      color:var(--muted);
+      transition: background .15s ease, color .15s ease;
+    }
+    .seg button.active{
+      background:rgba(36,209,143,.18);
+      color:var(--text);
+      box-shadow: inset 0 0 0 1px rgba(36,209,143,.35);
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:14px;
+      margin-top:12px;
+    }
+    .card h2{
+      margin:0 0 10px;
+      font-size:16px;
+      letter-spacing:.2px;
+    }
+    .hint{ color:var(--muted); font-size:13px; line-height:1.35; }
+
+    .row{ display:flex; gap:10px; }
+    .col{ flex:1; }
+
+    label{ display:block; margin:12px 0 6px; font-size:12px; color:var(--muted); }
+
+    input[type="text"], input[type="date"], select{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      outline:none;
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      font-size:16px;
+      appearance: none;
+    }
+    input::placeholder{ color:rgba(234,242,255,.45); }
+
+    .choice{ display:flex; gap:10px; margin-top:6px; }
+    .choice button{
+      flex:1;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      font-weight:950;
+      font-size:15px;
+      cursor:pointer;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .choice button.selected{
+      background: rgba(36,209,143,.22);
+      border-color: rgba(36,209,143,.55);
+      box-shadow: inset 0 0 0 4px rgba(36,209,143,.12);
+    }
+
+    .ratingRow{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
+    }
+    input[type="range"]{ width:100%; }
+    .ratingVal{ min-width:74px; text-align:right; font-weight:950; }
+
+    .btn{
+      width:100%;
+      margin-top:14px;
+      padding:13px 14px;
+      border:0;
+      border-radius:14px;
+      background:var(--green);
+      color:#052012;
+      font-weight:950;
+      font-size:16px;
+      cursor:pointer;
+      box-shadow:0 10px 18px rgba(36,209,143,.22);
+    }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; box-shadow:none; }
+
+    .btn.secondary{
+      background:rgba(255,255,255,.10);
+      color:var(--text);
+      border:1px solid var(--border);
+      box-shadow:none;
+    }
+
+    .stats{
+      display:flex; justify-content:space-between; gap:10px;
+      margin-top:10px;
+    }
+    .stat{
+      flex:1;
+      background:rgba(0,0,0,.18);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px;
+    }
+    .stat .k{ color:var(--muted); font-size:12px; }
+    .stat .v{ font-size:14px; font-weight:950; margin-top:4px; }
+
+    .teamsWrap{ display:none; gap:10px; margin-top:12px; }
+    .teamsWrap.show{ display:flex; }
+    .team{
+      flex:1;
+      background:rgba(0,0,0,.18);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:10px;
+    }
+    .team h3{ margin:2px 0 10px; font-size:14px; }
+    ul{ list-style:none; padding:0; margin:0; }
+    li{
+      display:flex; justify-content:space-between; gap:10px;
+      padding:8px 8px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      margin-bottom:8px;
+      font-size:14px;
+    }
+    .tag{ font-weight:950; opacity:.9; }
+
+    /* Admin modal */
+    #adminModal{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+      z-index: 50;
+      padding: 18px;
+    }
+    .modalBox{
+      max-width:420px;
+      margin: 12vh auto 0;
+      background: rgba(10,26,45,.95);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.5);
+      color:#eaf2ff;
+    }
+    .modalTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .modalTitle{ font-weight:950; font-size:18px; }
+    .modalSub{ opacity:.75; font-size:13px; margin-top:4px; }
+    .iconBtn{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.08);
+      color:#eaf2ff;
+      border-radius: 12px;
+      padding:10px 12px;
+      font-weight:950;
+      cursor:pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <!-- Visible alerts -->
+    <div id="alert" class="alert">
+      <div class="msg" id="alertMsg"></div>
+      <button class="x" id="alertClose" type="button">Close</button>
+    </div>
+
+    <div class="top">
+      <div class="brand">
+        <h1>⚽ Saturday Soccer</h1>
+        <div class="sub">Players vote • Admin creates poll • Fair teams</div>
+      </div>
+      <div class="pill" id="pollPill">Loading…</div>
+    </div>
+
+    <div class="seg">
+      <button id="tabPlayer" class="active" type="button">Player</button>
+      <button id="tabAdmin" type="button">Admin</button>
+    </div>
+
+    <!-- PLAYER VIEW -->
+    <div id="playerView">
+      <div class="card">
+        <h2>Player Vote</h2>
+        <div class="hint" id="playerHint">Enter name, choose YES/NO, set rating, submit.</div>
+
+        <div class="row">
+          <div class="col">
+            <label>First name</label>
+            <input id="firstName" type="text" placeholder="e.g., Aayush" autocomplete="given-name">
+          </div>
+          <div class="col">
+            <label>Last name</label>
+            <input id="lastName" type="text" placeholder="e.g., Tajale" autocomplete="family-name">
+          </div>
+        </div>
+
+        <label>Playing this Saturday?</label>
+        <div class="choice">
+          <button id="btnYes" type="button">YES ✅</button>
+          <button id="btnNo" type="button">NO ❌</button>
+        </div>
+
+        <label>Skill rating</label>
+        <div class="ratingRow">
+          <input id="rating" type="range" min="1" max="5" value="3">
+          <div class="ratingVal"><span id="ratingVal">3</span>/5 ⭐</div>
+        </div>
+
+        <button id="btnSubmit" class="btn" type="button">Submit Vote</button>
+      </div>
+
+      <!-- Players can see teams -->
+      <div class="card">
+        <h2>Teams</h2>
+        <div class="hint">When teams are generated, everyone can view them here.</div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="k">YES count</div>
+            <div class="v" id="yesCountPlayer">0</div>
+          </div>
+          <div class="stat">
+            <div class="k">Generated at</div>
+            <div class="v" id="generatedAtPlayer">—</div>
+          </div>
+        </div>
+
+        <button id="btnTeamsPlayer" class="btn secondary" type="button">Refresh Teams</button>
+
+        <div class="teamsWrap" id="teamsWrapPlayer">
+          <div class="team">
+            <h3>Team A</h3>
+            <ul id="teamAPlayer"></ul>
+          </div>
+          <div class="team">
+            <h3>Team B</h3>
+            <ul id="teamBPlayer"></ul>
+          </div>
+        </div>
+
+        <div class="hint" id="teamsHintPlayer" style="margin-top:10px;">Tap “Refresh Teams” to view.</div>
+      </div>
+    </div>
+
+    <!-- ADMIN VIEW -->
+    <div id="adminView" style="display:none;">
+      <div class="card">
+        <h2>Create Poll</h2>
+        <div class="hint">
+          Pick the <b>Poll Date</b> (Saturday). Then pick <b>Poll End Date</b> from calendar and <b>Poll End Time</b> from dropdown.
+          Example: end Friday at <b>8:00 PM</b>.
+        </div>
+
+        <label>Poll date (Saturday)</label>
+        <input id="pollDate" type="date">
+
+        <div class="row">
+          <div class="col">
+            <label>Poll end date</label>
+            <input id="endsDate" type="date">
+          </div>
+          <div class="col">
+            <label>Poll end time</label>
+            <select id="endsTime"></select>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="k">Poll ends at</div>
+            <div class="v" id="endsPreview">—</div>
+          </div>
+          <div class="stat">
+            <div class="k">Countdown</div>
+            <div class="v" id="countdown">—</div>
+          </div>
+        </div>
+
+        <button id="btnCreatePoll" class="btn" type="button">Create Poll</button>
+        <button id="btnReload" class="btn secondary" type="button">Reload Poll Info</button>
+      </div>
+
+      <div class="card">
+        <h2>Team Generator</h2>
+        <div class="hint">Includes <b>all YES voters</b>. Shows YES count when you generate teams.</div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="k">YES count</div>
+            <div class="v" id="yesCountAdmin">0</div>
+          </div>
+          <div class="stat">
+            <div class="k">Generated at</div>
+            <div class="v" id="generatedAtAdmin">—</div>
+          </div>
+        </div>
+
+        <button id="btnTeamsAdmin" class="btn" type="button">Generate Teams</button>
+
+        <div class="teamsWrap" id="teamsWrapAdmin">
+          <div class="team">
+            <h3>Team A</h3>
+            <ul id="teamAAdmin"></ul>
+          </div>
+          <div class="team">
+            <h3>Team B</h3>
+            <ul id="teamBAdmin"></ul>
+          </div>
+        </div>
+
+        <div class="hint" id="teamsHintAdmin" style="margin-top:10px;">Generate teams to see the lineup.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Login Modal -->
+  <div id="adminModal">
+    <div class="modalBox">
+      <div class="modalTop">
+        <div>
+          <div class="modalTitle">Admin Login</div>
+          <div class="modalSub">Enter credentials to access Admin tools.</div>
+        </div>
+        <button id="adminClose" class="iconBtn" type="button">✕</button>
+      </div>
+
+      <div style="margin-top:14px;">
+        <label>Username</label>
+        <input id="adminUser" type="text" placeholder="Username">
+      </div>
+
+      <div style="margin-top:12px;">
+        <label>Password</label>
+        <input id="adminPass" type="password" placeholder="Password">
+      </div>
+
+      <div class="row" style="margin-top:14px;">
+        <button id="adminLoginBtn" class="btn" type="button" style="margin-top:0;">Login</button>
+        <button id="adminCancelBtn" class="btn secondary" type="button" style="margin-top:0;">Cancel</button>
+      </div>
+
+      <div class="hint" style="margin-top:10px;">
+        Note: This is a simple MVP lock (client-side). For real security, use backend auth.
+      </div>
+    </div>
+  </div>
+
+<script>
+  const API_BASE = "http://localhost:8080/api/v1";
+
+  // Change these:
+  const ADMIN_USERNAME = "admin";
+  const ADMIN_PASSWORD = "soccer123";
+
+  let pollId = null;
+  let endsAt = null; // Date
+  let attending = true; // default YES
+
+  const $ = (id) => document.getElementById(id);
+
+  // --- Big visible alert ---
+  function showAlert(type, title, detail){
+    const a = $("alert");
+    a.className = `alert show ${type}`;
+    a.classList.remove("shake");
+    void a.offsetWidth; // reflow
+    if (type === "error") a.classList.add("shake");
+
+    $("alertMsg").innerHTML = `
+      ${escapeHtml(title)}
+      ${detail ? `<span class="sub">${escapeHtml(detail)}</span>` : ""}
+    `;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function clearAlert(){
+    const a = $("alert");
+    a.className = "alert";
+  }
+  $("alertClose").addEventListener("click", clearAlert);
+
+  function pad(n){ return String(n).padStart(2,"0"); }
+  function normalizeName(s){ return (s||"").trim().toLowerCase(); }
+
+  function fmtNice(d){
+    return d.toLocaleString(undefined, { weekday:"short", month:"short", day:"numeric", hour:"numeric", minute:"2-digit" });
+  }
+
+  function toRFC3339Local(d){
+    const y = d.getFullYear();
+    const m = pad(d.getMonth()+1);
+    const day = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const mm = pad(d.getMinutes());
+    const ss = pad(d.getSeconds());
+    const offsetMin = -d.getTimezoneOffset();
+    const sign = offsetMin >= 0 ? "+" : "-";
+    const abs = Math.abs(offsetMin);
+    const oh = pad(Math.floor(abs/60));
+    const om = pad(abs%60);
+    return `${y}-${m}-${day}T${hh}:${mm}:${ss}${sign}${oh}:${om}`;
+  }
+
+  function setTab(which){
+    const isPlayer = which === "player";
+    $("playerView").style.display = isPlayer ? "block" : "none";
+    $("adminView").style.display  = isPlayer ? "none" : "block";
+    $("tabPlayer").classList.toggle("active", isPlayer);
+    $("tabAdmin").classList.toggle("active", !isPlayer);
+  }
+  $("tabPlayer").addEventListener("click", ()=>setTab("player"));
+
+  // --- Admin gate ---
+  function isAdminAuthed(){ return sessionStorage.getItem("admin_authed") === "1"; }
+  function openAdminModal(){
+    $("adminModal").style.display = "block";
+    $("adminUser").value = "";
+    $("adminPass").value = "";
+    setTimeout(()=> $("adminUser").focus(), 50);
+  }
+  function closeAdminModal(){ $("adminModal").style.display = "none"; }
+  function tryAdminLogin(){
+    const u = ($("adminUser").value || "").trim();
+    const p = ($("adminPass").value || "").trim();
+    if (u === ADMIN_USERNAME && p === ADMIN_PASSWORD){
+      sessionStorage.setItem("admin_authed", "1");
+      closeAdminModal();
+      setTab("admin");
+      showAlert("ok", "Admin unlocked ✅");
+      return;
+    }
+    showAlert("error", "Invalid admin credentials", "Please try again.");
+  }
+  $("tabAdmin").addEventListener("click", ()=>{
+    if (isAdminAuthed()) setTab("admin");
+    else openAdminModal();
+  });
+  $("adminLoginBtn").addEventListener("click", tryAdminLogin);
+  $("adminCancelBtn").addEventListener("click", closeAdminModal);
+  $("adminClose").addEventListener("click", closeAdminModal);
+  $("adminPass").addEventListener("keydown", (e)=>{ if (e.key === "Enter") tryAdminLogin(); });
+
+  // --- YES/NO selected turns green ---
+  function selectedState(){
+    $("btnYes").classList.toggle("selected", attending === true);
+    $("btnNo").classList.toggle("selected", attending === false);
+  }
+  $("btnYes").addEventListener("click", ()=>{ attending = true; selectedState(); });
+  $("btnNo").addEventListener("click", ()=>{ attending = false; selectedState(); });
+  selectedState();
+
+  $("rating").addEventListener("input", (e)=>$("ratingVal").textContent = e.target.value);
+
+  // --- Populate time dropdown (every 15 min) ---
+  function populateTimeSelect(){
+    const sel = $("endsTime");
+    sel.innerHTML = "";
+    for (let h=0; h<24; h++){
+      for (let m=0; m<60; m+=15){
+        const v = `${pad(h)}:${pad(m)}`;
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        sel.appendChild(opt);
+      }
+    }
+  }
+
+function computeEndsAtFromInputs() {
+  const dStr = $("endsDate").value;
+  const tStr = $("endsTime").value;
+  if (!dStr || !tStr) return null;
+
+  const [year, month, day] = dStr.split("-").map(Number);
+  const [hh, mm] = tStr.split(":").map(Number);
+
+  // Create a local date (year, month-1, day, hour, minute)
+  const d = new Date(year, month - 1, day, hh, mm || 0, 0, 0);
+  return d;
+}
+
+function updateEndsPreview() {
+  const d = computeEndsAtFromInputs();
+  $("endsPreview").textContent = d ? fmtNice(d) : "—";
+}
+  function updateCountdown(){
+    if (!endsAt){
+      $("countdown").textContent = "—";
+      return;
+    }
+    const now = new Date();
+    const ms = endsAt - now;
+    if (ms <= 0){
+      $("countdown").textContent = "Closed";
+      return;
+    }
+    const totalMin = Math.floor(ms / 60000);
+    const days = Math.floor(totalMin / (60*24));
+    const hrs = Math.floor((totalMin - days*60*24) / 60);
+    const mins = totalMin % 60;
+    $("countdown").textContent = `${days}d ${hrs}h ${mins}m`;
+  }
+
+  function updateSubmitState(){
+    const closed = endsAt && (new Date() > endsAt);
+    if (closed){
+      $("playerHint").textContent = "Poll is closed. You can’t vote now.";
+      $("btnSubmit").disabled = true;
+    } else {
+      $("playerHint").textContent = "Enter name, choose YES/NO, set rating, submit.";
+      $("btnSubmit").disabled = false;
+    }
+  }
+
+  $("endsDate").addEventListener("change", ()=>{
+    updateEndsPreview();
+    endsAt = computeEndsAtFromInputs();
+    updateCountdown();
+    updateSubmitState();
+  });
+  $("endsTime").addEventListener("change", ()=>{
+    updateEndsPreview();
+    endsAt = computeEndsAtFromInputs();
+    updateCountdown();
+    updateSubmitState();
+  });
+
+  // --- Defaults: next Saturday + Friday 8PM ---
+  function setDefaults(){
+    populateTimeSelect();
+
+    const now = new Date();
+    const day = now.getDay(); // Sun=0..Sat=6
+    let delta = (6 - day + 7) % 7;
+    if (delta === 0) delta = 7;
+
+    const sat = new Date(now);
+    sat.setDate(now.getDate() + delta);
+
+    const fri = new Date(sat);
+    fri.setDate(sat.getDate() - 1);
+
+    const satStr = `${sat.getFullYear()}-${pad(sat.getMonth()+1)}-${pad(sat.getDate())}`;
+    const friStr = `${fri.getFullYear()}-${pad(fri.getMonth()+1)}-${pad(fri.getDate())}`;
+
+    $("pollDate").value = satStr;
+    $("endsDate").value = friStr;
+    $("endsTime").value = "20:00";
+
+    updateEndsPreview();
+    endsAt = computeEndsAtFromInputs();
+  }
+
+  // --- Load poll info ---
+  async function loadPollInfo(){
+    $("pollPill").textContent = "Loading…";
+    try {
+      const res = await fetch(`${API_BASE}/polls/current`);
+      if (!res.ok) throw new Error("no open poll");
+      const p = await res.json();
+
+      pollId = p.id;
+      endsAt = p.endsAt ? new Date(p.endsAt) : null;
+
+      localStorage.setItem("lastPollId", pollId);
+      localStorage.setItem("lastPollEndsAt", p.endsAt || "");
+
+      $("pollPill").textContent = endsAt ? `OPEN • Ends: ${fmtNice(endsAt)}` : `OPEN • Ends: —`;
+    } catch (e) {
+      pollId = localStorage.getItem("lastPollId");
+      const lastEnds = localStorage.getItem("lastPollEndsAt");
+      endsAt = lastEnds ? new Date(lastEnds) : endsAt;
+
+      $("pollPill").textContent = pollId ? `No open poll • Using last poll (teams)` : "No poll • Create one in Admin";
+      if (!pollId){
+        showAlert("warn", "No poll found", "Ask Admin to create a poll first.");
+      }
+    }
+    updateCountdown();
+    updateSubmitState();
+  }
+
+  // --- Create poll ---
+  async function createPoll(){
+    clearAlert();
+
+    const pollDate = $("pollDate").value;
+    const endDT = computeEndsAtFromInputs();
+
+    if (!pollDate){
+      showAlert("error", "Poll date is required", "Please select the Saturday poll date.");
+      return;
+    }
+    if (!endDT){
+      showAlert("error", "Poll end date/time is required", "Select an end date and pick a time from the dropdown.");
+      return;
+    }
+
+    $("btnCreatePoll").disabled = true;
+    $("btnCreatePoll").textContent = "Creating…";
+
+    const payload = { pollDate, endsAt: toRFC3339Local(endDT) };
+
+    const res = await fetch(`${API_BASE}/polls`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    $("btnCreatePoll").disabled = false;
+    $("btnCreatePoll").textContent = "Create Poll";
+
+    if (!res.ok){
+      const txt = await res.text().catch(()=> "");
+      showAlert("error", "Failed to create poll", txt || "Check server logs and try again.");
+      return;
+    }
+
+    const created = await res.json();
+    pollId = created.id;
+    endsAt = created.endsAt ? new Date(created.endsAt) : endDT;
+
+    localStorage.setItem("lastPollId", pollId);
+    localStorage.setItem("lastPollEndsAt", created.endsAt || toRFC3339Local(endDT));
+
+    $("pollPill").textContent = `OPEN • Ends: ${fmtNice(endsAt)}`;
+    showAlert("ok", "Poll created ✅", "Players can vote now.");
+    updateCountdown();
+    updateSubmitState();
+  }
+
+  // --- Submit vote ---
+  async function submitVote(){
+    clearAlert();
+
+    if (!pollId){
+      showAlert("error", "No poll available", "Ask Admin to create a poll first.");
+      return;
+    }
+    if (endsAt && (new Date() > endsAt)){
+      showAlert("error", "Poll is closed", "You can’t vote after the deadline.");
+      return;
+    }
+
+    const firstName = $("firstName").value.trim();
+    const lastName  = $("lastName").value.trim();
+    if (!firstName || !lastName){
+      showAlert("error", "Name is required", "Enter both first name and last name.");
+      return;
+    }
+
+    const yesKey = `yes_${pollId}_${normalizeName(firstName)}_${normalizeName(lastName)}`;
+    if (attending === true && localStorage.getItem(yesKey) === "1"){
+      showAlert("warn", "You already voted YES", "If you need to change it, ask Admin (future feature).");
+      return;
+    }
+
+    $("btnSubmit").disabled = true;
+    $("btnSubmit").textContent = "Submitting…";
+
+    const payload = { pollId, firstName, lastName, rating: Number($("rating").value), attending };
+
+    const res = await fetch(`${API_BASE}/votes`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.status === 409){
+      showAlert("warn", "You already voted YES", "Only one YES vote per person is allowed.");
+      $("btnSubmit").disabled = false;
+      $("btnSubmit").textContent = "Submit Vote";
+      return;
+    }
+    if (res.status === 403){
+      showAlert("error", "Poll is closed", "Deadline passed.");
+      $("btnSubmit").disabled = true;
+      $("btnSubmit").textContent = "Poll Closed";
+      return;
+    }
+    if (!res.ok){
+      const txt = await res.text().catch(()=> "");
+      showAlert("error", "Vote failed", txt || "Try again.");
+      $("btnSubmit").disabled = false;
+      $("btnSubmit").textContent = "Submit Vote";
+      return;
+    }
+
+    if (attending === true) localStorage.setItem(yesKey, "1");
+    showAlert("ok", "Vote submitted ✅", attending ? "You voted YES." : "You voted NO.");
+    $("btnSubmit").textContent = "Submitted ✅";
+  }
+
+  // --- Teams (shared) ---
+  async function fetchTeams(forWho){
+    clearAlert();
+
+    if (!pollId){
+      showAlert("error", "No poll id available", "Ask Admin to create a poll first.");
+      return;
+    }
+
+    const btn = forWho === "admin" ? $("btnTeamsAdmin") : $("btnTeamsPlayer");
+    btn.disabled = true;
+    btn.textContent = forWho === "admin" ? "Generating…" : "Refreshing…";
+
+    const res = await fetch(`${API_BASE}/polls/${pollId}/teams`, { method:"POST" });
+
+    btn.disabled = false;
+    btn.textContent = forWho === "admin" ? "Generate Teams" : "Refresh Teams";
+
+    if (!res.ok){
+      const txt = await res.text().catch(()=> "");
+      showAlert("error", "Failed to get teams", txt || "Try again.");
+      return;
+    }
+
+    const data = await res.json();
+
+    // Cache locally (so UI can show last teams even if you switch tabs)
+    localStorage.setItem(`lastTeams_${pollId}`, JSON.stringify(data));
+
+    renderTeamsUI("admin", data);
+    renderTeamsUI("player", data);
+
+    showAlert("ok", "Teams updated ✅", "Everyone can view teams in the Player tab.");
+  }
+
+  function renderTeamsUI(which, data){
+    const teamA = Array.isArray(data.teamA) ? data.teamA : [];
+    const teamB = Array.isArray(data.teamB) ? data.teamB : [];
+    const yesCount = (typeof data.yesCount === "number") ? data.yesCount : (teamA.length + teamB.length);
+    const genAt = data.generatedAt ? new Date(data.generatedAt) : new Date();
+
+    if (which === "admin"){
+      $("yesCountAdmin").textContent = String(yesCount);
+      $("generatedAtAdmin").textContent = fmtNice(genAt);
+      renderTeamList("teamAAdmin", teamA);
+      renderTeamList("teamBAdmin", teamB);
+      $("teamsWrapAdmin").classList.add("show");
+      $("teamsHintAdmin").textContent = yesCount ? "Teams generated ✅" : "No YES votes yet.";
+    } else {
+      $("yesCountPlayer").textContent = String(yesCount);
+      $("generatedAtPlayer").textContent = fmtNice(genAt);
+      renderTeamList("teamAPlayer", teamA);
+      renderTeamList("teamBPlayer", teamB);
+      $("teamsWrapPlayer").classList.add("show");
+      $("teamsHintPlayer").textContent = yesCount ? "Teams ready ✅" : "No YES votes yet.";
+    }
+  }
+
+  function renderTeamList(listId, players){
+    const ul = $(listId);
+    ul.innerHTML = "";
+    for (const p of players){
+      const name = (p.name ?? "Player").trim() || "Player";
+      const rating = (p.rating ?? "-");
+      const li = document.createElement("li");
+      li.innerHTML = `<span>${escapeHtml(name)}</span><span class="tag">⭐ ${escapeHtml(String(rating))}</span>`;
+      ul.appendChild(li);
+    }
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, (m)=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+
+  // Wire buttons
+  $("btnSubmit").addEventListener("click", submitVote);
+  $("btnCreatePoll").addEventListener("click", createPoll);
+  $("btnReload").addEventListener("click", loadPollInfo);
+  $("btnTeamsAdmin").addEventListener("click", ()=>fetchTeams("admin"));
+  $("btnTeamsPlayer").addEventListener("click", ()=>fetchTeams("player"));
+
+  // Boot
+  setDefaults();
+
+  (async function boot(){
+    await loadPollInfo();
+    updateCountdown();
+    updateSubmitState();
+
+    // If teams were previously generated, show them immediately (same device)
+    if (pollId){
+      const cached = localStorage.getItem(`lastTeams_${pollId}`);
+      if (cached){
+        try{
+          const data = JSON.parse(cached);
+          renderTeamsUI("admin", data);
+          renderTeamsUI("player", data);
+        } catch {}
+      }
+    }
+
+    setInterval(()=>{ updateCountdown(); updateSubmitState(); }, 1000);
+  })();
+</script>
+</body>
+</html>
