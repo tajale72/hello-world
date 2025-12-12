@@ -6,6 +6,7 @@ import (
 	"soccer-app/config"
 	"soccer-app/handlers"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,6 +14,14 @@ func main() {
 	db := config.MustMongo()
 
 	r := gin.Default()
+	// CORS middleware - configured for ngrok
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"}
+	config.AllowCredentials = true
+	config.ExposeHeaders = []string{"Content-Length", "Content-Type"}
+	r.Use(cors.New(config))
 
 	// ✅ Serve static files
 	r.Static("/static", "./static")
