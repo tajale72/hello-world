@@ -31,6 +31,11 @@ func main() {
 		c.File("./static/index.html")
 	})
 
+	// ✅ Serve index.html at root "/"
+	r.GET("/game", func(c *gin.Context) {
+		c.File("./static/game.html")
+	})
+
 	api := r.Group("/api/v1")
 	{
 		api.GET("/players", handlers.GetPlayers(db))

@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>⚽ Penalty Shootout Pro</title>
+    <style>
+        :root {
+            --bg1: #050b18;
+            --bg2: #071224;
+            --card: rgba(255, 255, 255, .06);
+            --b: rgba(255, 255, 255, .14);
+            --t: #eaf2ff;
+            --m: rgba(234, 242, 255, .70);
+            --g: #24d18f;
+            --r: #ff4d4f;
+            --y: #ffb020;
+            --shadow: 0 16px 40px rgba(0, 0, 0, .45);
+            --rds: 18px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+            color: var(--t);
+            background:
+                radial-gradient(1200px 600px at 20% 0%, rgba(36, 209, 143, .16), transparent 60%),
+                radial-gradient(900px 500px at 80% 12%, rgba(88, 145, 255, .16), transparent 60%),
+                linear-gradient(180deg, var(--bg1), var(--bg2));
+            padding: 14px 12px 30px;
+        }
+
+        .wrap {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: .2px;
+        }
+
+        .sub {
+            margin-top: 4px;
+            font-size: 13px;
+            color: var(--m);
+            line-height: 1.35;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--b);
+            background: rgba(255, 255, 255, .06);
+            color: var(--m);
+            font-size: 12.5px;
+            white-space: nowrap;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.2fr .8fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .03));
+            border: 1px solid var(--b);
+            border-radius: var(--rds);
+            box-shadow: var(--shadow);
+            padding: 12px;
+        }
+
+        .card h2 {
+            margin: 0 0 8px;
+            font-size: 15px;
+            letter-spacing: .2px;
+        }
+
+        .hint {
+            color: var(--m);
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, .18);
+            background: rgba(0, 0, 0, .20);
+            color: var(--t);
+            font-size: 16px;
+            outline: none;
+        }
+
+        input::placeholder {
+            color: rgba(234, 242, 255, .45);
+        }
+
+        .btn {
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 0;
+            background: var(--g);
+            color: #051e12;
+            font-weight: 950;
+            cursor: pointer;
+            box-shadow: 0 10px 18px rgba(36, 209, 143, .20);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn.secondary {
+            background: rgba(255, 255, 255, .10);
+            border: 1px solid rgba(255, 255, 255, .18);
+            color: var(--t);
+            box-shadow: none;
+        }
+
+        .btn:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .banner {
+            display: none;
+            border-radius: 16px;
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, .16);
+            box-shadow: 0 16px 35px rgba(0, 0, 0, .45);
+            margin-bottom: 10px;
+            backdrop-filter: blur(8px);
+        }
+
+        .banner.show {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .banner.error {
+            background: rgba(255, 77, 79, .20);
+            border-color: rgba(255, 77, 79, .45);
+        }
+
+        .banner.ok {
+            background: rgba(36, 209, 143, .16);
+            border-color: rgba(36, 209, 143, .45);
+        }
+
+        .banner.warn {
+            background: rgba(255, 176, 32, .16);
+            border-color: rgba(255, 176, 32, .45);
+        }
+
+        .banner .msg {
+            font-weight: 950;
+            font-size: 14px;
+        }
+
+        .banner .submsg {
+            margin-top: 6px;
+            color: rgba(234, 242, 255, .82);
+            font-size: 12.5px;
+            font-weight: 700;
+        }
+
+        .banner .x {
+            border: 1px solid rgba(255, 255, 255, .16);
+            background: rgba(255, 255, 255, .10);
+            color: var(--t);
+            border-radius: 12px;
+            padding: 8px 10px;
+            cursor: pointer;
+            font-weight: 950;
+        }
+
+        .canvasWrap {
+            position: relative;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .14);
+            background: rgba(0, 0, 0, .14);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .hud {
+            position: absolute;
+            inset: 10px 10px auto 10px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .hud .chip {
+            pointer-events: none;
+            display: inline-flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 10px 10px;
+            border-radius: 16px;
+            background: rgba(0, 0, 0, .30);
+            border: 1px solid rgba(255, 255, 255, .16);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, .25);
+            min-width: 160px;
+        }
+
+        .chip .k {
+            color: rgba(234, 242, 255, .75);
+            font-size: 12px;
+        }
+
+        .chip .v {
+            font-weight: 950;
+            font-size: 14px;
+        }
+
+        .chip .v small {
+            opacity: .75;
+            font-weight: 900;
+        }
+
+        .overlay {
+            position: absolute;
+            inset: auto 10px 10px 10px;
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+            justify-content: space-between;
+            pointer-events: none;
+            /* ✅ let clicks pass to canvas */
+        }
+
+        .overlay .miniBtns,
+        .overlay .miniBtns button {
+            pointer-events: auto;
+            /* ✅ but buttons still clickable */
+        }
+
+        .overlay .help {
+            flex: 1;
+            padding: 10px 10px;
+            border-radius: 16px;
+            background: rgba(0, 0, 0, .30);
+            border: 1px solid rgba(255, 255, 255, .16);
+            backdrop-filter: blur(8px);
+            color: rgba(234, 242, 255, .86);
+            font-size: 12.5px;
+            line-height: 1.35;
+        }
+
+        .overlay .miniBtns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .board {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .rowItem {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, .10);
+            background: rgba(255, 255, 255, .04);
+        }
+
+        .rowItem .left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .rowItem .name {
+            font-weight: 950;
+        }
+
+        .rowItem .meta {
+            font-size: 12px;
+            color: var(--m);
+        }
+
+        .rowItem .right {
+            font-weight: 950;
+        }
+
+        .legend {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            color: var(--m);
+            font-size: 12.5px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .dot.g {
+            background: var(--g);
+        }
+
+        .dot.r {
+            background: var(--r);
+        }
+
+        .dot.y {
+            background: var(--y);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="banner" id="banner">
+            <div>
+                <div class="msg" id="bMsg">—</div>
+                <div class="submsg" id="bSub">—</div>
+            </div>
+            <button class="x" id="bClose" type="button">Close</button>
+        </div>
+
+        <div class="top">
+            <div>
+                <h1>⚽ Penalty Shootout Pro</h1>
+                <div class="sub">Swipe to shoot. More drag = more power. Side swipe = more curve. 5 shots each.</div>
+            </div>
+            <div class="pill" id="statusPill">Add at least 2 players</div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>Pitch</h2>
+
+                <div class="canvasWrap">
+                    <canvas id="c" width="900" height="540"></canvas>
+
+                    <div class="hud">
+                        <div class="chip">
+                            <div class="k">Shooter</div>
+                            <div class="v" id="hudShooter">—</div>
+                            <div class="k">Shot</div>
+                            <div class="v"><span id="hudShot">0</span><small>/5</small></div>
+                        </div>
+
+                        <div class="chip">
+                            <div class="k">Result</div>
+                            <div class="v" id="hudResult">—</div>
+                            <div class="k">Keeper</div>
+                            <div class="v" id="hudKeeper">Ready</div>
+                        </div>
+                    </div>
+
+                    <div class="overlay">
+                        <!-- <div class="help" id="help">
+                            <b>How to shoot:</b> press on the ball → drag to aim (up = lift) → release to kick.<br>
+                            <b>Tip:</b> Drag sideways for curve. Try top corners 😈
+                        </div> -->
+                        <div class="miniBtns">
+                            <button class="btn secondary" id="btnNext" type="button">Skip Turn</button>
+                            <button class="btn secondary" id="btnResetShots" type="button">Reset Match</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <span><span class="dot g"></span>Goal</span>
+                    <span><span class="dot r"></span>Saved / Miss</span>
+                    <span><span class="dot y"></span>Post / Bar</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Players</h2>
+                <div class="hint">Add names, then start shooting. Pass the phone each turn.</div>
+
+                <label style="display:block;margin:10px 0 6px;color:var(--m);font-size:12px;">Add player</label>
+                <div class="row">
+                    <input id="name" placeholder="Player name" />
+                    <button class="btn secondary" id="add" type="button" style="white-space:nowrap;">Add</button>
+                </div>
+
+                <div class="row" style="margin-top:10px;">
+                    <button class="btn" id="start" type="button" style="flex:1;">Start Match</button>
+                    <button class="btn secondary" id="clearPlayers" type="button" style="flex:1;">Clear</button>
+                </div>
+
+                <div class="board" id="board"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            const $ = (id) => document.getElementById(id);
+
+            // ====== UI banner ======
+            function banner(type, msg, sub = "") {
+                const b = $("banner");
+                b.className = `banner show ${type}`;
+                $("bMsg").textContent = msg;
+                $("bSub").textContent = sub;
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+            function clearBanner() {
+                $("banner").className = "banner";
+            }
+            $("bClose").addEventListener("click", clearBanner);
+
+            // ====== Game state ======
+            const state = {
+                players: [], // {name, goals, shots}
+                started: false,
+                turn: 0,
+                maxShots: 5,
+                lastOutcome: "—",
+            };
+
+            function save() {
+                localStorage.setItem("pk_pro_v1", JSON.stringify(state));
+            }
+            function load() {
+                const raw = localStorage.getItem("pk_pro_v1");
+                if (!raw) return;
+                try {
+                    const s = JSON.parse(raw);
+                    if (Array.isArray(s.players)) Object.assign(state, s);
+                } catch { }
+            }
+
+            // ====== Canvas / visuals ======
+            const canvas = $("c");
+            const ctx = canvas.getContext("2d");
+
+            // world units (meters-ish)
+            const goalZ = 38;
+            const halfGoalW = 7.32 / 2;   // 3.66
+            const goalH = 2.44;
+            const f = 240; // perspective factor
+
+            // Ball / physics
+            const ball = {
+                x: 0, y: 0.18, z: 0,
+                vx: 0, vy: 0, vz: 0,
+                spin: 0, // curve force
+                r: 0.11,
+                kicked: false,
+                t: 0,
+                trail: [],
+            };
+
+            // Keeper
+            const keeper = {
+                x: 0, y: 0.9, z: goalZ,
+                vx: 0, vy: 0,
+                diveX: 0, diveY: 0,
+                diving: false,
+                speed: 7.5,         // reach speed
+                reach: 0.90,     // smaller hands
+                reactAt: 0.22,   // slightly slower reaction
+                anim: 0,
+                result: "Ready"
+            };
+
+            // Net ripple
+            const net = {
+                hit: false,
+                at: 0,
+                x: 0, y: 0
+            };
+
+            // Touch aiming
+            let aiming = false;
+            let aimStart = null; // screen coords
+            let aimNow = null;
+
+            // Audio (simple)
+            let audioCtx = null;
+            function beep(freq = 440, dur = 0.08) {
+                try {
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.frequency.value = freq;
+                    o.type = "sine";
+                    g.gain.value = 0.08;
+                    o.connect(g); g.connect(audioCtx.destination);
+                    o.start();
+                    o.stop(audioCtx.currentTime + dur);
+                } catch { }
+            }
+
+            function currentPlayer() {
+                return state.players[state.turn % state.players.length];
+            }
+
+            function isOver() {
+                return state.started &&
+                    state.players.length >= 2 &&
+                    state.players.every(p => p.shots >= state.maxShots);
+            }
+
+            function winnerText() {
+                const max = Math.max(...state.players.map(p => p.goals));
+                const winners = state.players.filter(p => p.goals === max).map(p => p.name);
+                return winners.length === 1
+                    ? `🏆 ${winners[0]} wins (${max} goals)`
+                    : `🤝 Tie: ${winners.join(", ")} (${max} goals)`;
+            }
+
+            function setStatusPill() {
+                const pill = $("statusPill");
+                if (state.players.length < 2) {
+                    pill.textContent = "Add at least 2 players";
+                    return;
+                }
+                if (!state.started) {
+                    pill.textContent = "Ready to start";
+                    return;
+                }
+                if (isOver()) {
+                    pill.textContent = "Match finished";
+                    return;
+                }
+                pill.textContent = "Swipe to shoot";
+            }
+
+            function renderBoard() {
+                const wrap = $("board");
+                wrap.innerHTML = "";
+                for (const p of state.players) {
+                    const div = document.createElement("div");
+                    div.className = "rowItem";
+                    div.innerHTML = `
+        <div class="left">
+          <div class="name">${escapeHtml(p.name)}</div>
+          <div class="meta">Shots: ${p.shots}/${state.maxShots}</div>
+        </div>
+        <div class="right">${p.goals} ⚽</div>
+      `;
+                    wrap.appendChild(div);
+                }
+                setStatusPill();
+            }
+
+            function escapeHtml(s) {
+                return String(s).replace(/[&<>"']/g, (m) => ({
+                    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+                }[m]));
+            }
+
+            function resetBallAndKeeper() {
+                ball.x = 0; ball.y = 0.18; ball.z = 0;
+                ball.vx = 0; ball.vy = 0; ball.vz = 0;
+                ball.spin = 0;
+                ball.kicked = false;
+                ball.t = 0;
+                ball.trail = [];
+
+                keeper.x = 0; keeper.y = 0.9;
+                keeper.vx = 0; keeper.vy = 0;
+                keeper.diving = false;
+                keeper.diveX = 0; keeper.diveY = 0;
+                keeper.anim = 0;
+                keeper.result = "Ready";
+
+                net.hit = false;
+                state.lastOutcome = "—";
+                $("hudResult").textContent = "—";
+                $("hudKeeper").textContent = "Ready";
+            }
+
+            // ====== Projection helpers ======
+            function proj(x, y, z) {
+                const s = f / (f + z * 10); // scale (z in meters -> *10 feels better)
+                const cx = canvas.width * 0.5;
+                const groundY = canvas.height * 0.80;
+                const sx = cx + x * 110 * s;
+                const sy = groundY - y * 140 * s - z * 2.0 * s; // slight tilt
+                return { x: sx, y: sy, s };
+            }
+
+            // ====== Draw stadium scene ======
+            function drawBackground() {
+                const w = canvas.width, h = canvas.height;
+
+                // sky glow
+                const g1 = ctx.createLinearGradient(0, 0, 0, h);
+                g1.addColorStop(0, "rgba(35,80,160,0.28)");
+                g1.addColorStop(0.5, "rgba(5,11,24,0.35)");
+                g1.addColorStop(1, "rgba(5,11,24,0.85)");
+                ctx.fillStyle = g1;
+                ctx.fillRect(0, 0, w, h);
+
+                // stadium lights
+                for (let i = 0; i < 5; i++) {
+                    const x = (i + 0.5) * w / 5;
+                    const lg = ctx.createRadialGradient(x, 40, 10, x, 60, 150);
+                    lg.addColorStop(0, "rgba(255,255,255,0.18)");
+                    lg.addColorStop(1, "rgba(255,255,255,0)");
+                    ctx.fillStyle = lg;
+                    ctx.beginPath(); ctx.arc(x, 50, 130, 0, Math.PI * 2); ctx.fill();
+                }
+
+                // crowd bands
+                ctx.fillStyle = "rgba(0,0,0,0.20)";
+                ctx.fillRect(0, h * 0.18, w, h * 0.20);
+                ctx.fillRect(0, h * 0.38, w, h * 0.10);
+
+                // pitch
+                const pitch = ctx.createLinearGradient(0, h * 0.52, 0, h);
+                pitch.addColorStop(0, "rgba(35,120,70,0.72)");
+                pitch.addColorStop(1, "rgba(10,60,40,0.92)");
+                ctx.fillStyle = pitch;
+                ctx.fillRect(0, h * 0.52, w, h * 0.48);
+
+                // mowing stripes
+                for (let i = 0; i < 10; i++) {
+                    ctx.fillStyle = i % 2 === 0 ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)";
+                    ctx.fillRect(0, h * 0.52 + i * (h * 0.48 / 10), w, h * 0.48 / 10);
+                }
+
+                // penalty spot arc / line
+                ctx.strokeStyle = "rgba(255,255,255,0.20)";
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.ellipse(w * 0.5, h * 0.80, 150, 35, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            function drawGoalAndNet() {
+                const w = canvas.width, h = canvas.height;
+
+                // Project goal posts corners
+                const leftPost = proj(-halfGoalW, 0, goalZ);
+                const rightPost = proj(halfGoalW, 0, goalZ);
+                const leftTop = proj(-halfGoalW, goalH, goalZ);
+                const rightTop = proj(halfGoalW, goalH, goalZ);
+
+                // goal shadow
+                ctx.fillStyle = "rgba(0,0,0,0.25)";
+                ctx.beginPath();
+                ctx.moveTo(leftPost.x, leftPost.y);
+                ctx.lineTo(rightPost.x, rightPost.y);
+                ctx.lineTo(rightTop.x, rightTop.y);
+                ctx.lineTo(leftTop.x, leftTop.y);
+                ctx.closePath();
+                ctx.fill();
+
+                // net (grid)
+                const cols = 9, rows = 6;
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = "rgba(255,255,255,0.14)";
+                for (let i = 0; i <= cols; i++) {
+                    const t = i / cols;
+                    const x = leftPost.x + (rightPost.x - leftPost.x) * t;
+                    ctx.beginPath();
+                    for (let j = 0; j <= rows; j++) {
+                        const u = j / rows;
+                        const y = leftTop.y + (leftPost.y - leftTop.y) * u;
+
+                        // net ripple
+                        let dx = 0, dy = 0;
+                        if (net.hit) {
+                            const tt = Math.min(1, (performance.now() / 1000 - net.at) / 0.8);
+                            const wave = Math.sin((t * 10 + u * 8) * Math.PI + tt * 10) * (1 - tt);
+                            const dist = Math.hypot((x - net.x) / 120, (y - net.y) / 80);
+                            const amp = Math.max(0, 1 - dist) * 14;
+                            dx = wave * amp;
+                            dy = wave * amp * 0.6;
+                        }
+
+                        if (j === 0) ctx.moveTo(x + dx, y + dy);
+                        else ctx.lineTo(x + dx, y + dy);
+                    }
+                    ctx.stroke();
+                }
+                for (let j = 0; j <= rows; j++) {
+                    const u = j / rows;
+                    const y = leftTop.y + (leftPost.y - leftTop.y) * u;
+                    ctx.beginPath();
+                    for (let i = 0; i <= cols; i++) {
+                        const t = i / cols;
+                        const x = leftPost.x + (rightPost.x - leftPost.x) * t;
+
+                        let dx = 0, dy = 0;
+                        if (net.hit) {
+                            const tt = Math.min(1, (performance.now() / 1000 - net.at) / 0.8);
+                            const wave = Math.sin((t * 9 + u * 9) * Math.PI + tt * 10) * (1 - tt);
+                            const dist = Math.hypot((x - net.x) / 120, (y - net.y) / 80);
+                            const amp = Math.max(0, 1 - dist) * 14;
+                            dx = wave * amp;
+                            dy = wave * amp * 0.6;
+                        }
+
+                        if (i === 0) ctx.moveTo(x + dx, y + dy);
+                        else ctx.lineTo(x + dx, y + dy);
+                    }
+                    ctx.stroke();
+                }
+
+                // posts & bar
+                ctx.lineWidth = 8;
+                ctx.lineCap = "round";
+                ctx.strokeStyle = "rgba(255,255,255,0.95)";
+                ctx.beginPath();
+                ctx.moveTo(leftPost.x, leftPost.y);
+                ctx.lineTo(leftTop.x, leftTop.y);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(rightPost.x, rightPost.y);
+                ctx.lineTo(rightTop.x, rightTop.y);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(leftTop.x, leftTop.y);
+                ctx.lineTo(rightTop.x, rightTop.y);
+                ctx.stroke();
+
+                // goal mouth highlight
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "rgba(36,209,143,0.30)";
+                ctx.strokeRect(leftTop.x, leftTop.y, rightTop.x - leftTop.x, leftPost.y - leftTop.y);
+            }
+
+            function drawKeeper() {
+                // simple keeper: torso + head + gloves, scaled by projection at goalZ
+                const p = proj(keeper.x, keeper.y, keeper.z);
+                const s = p.s;
+
+                const bodyW = 38 * s, bodyH = 70 * s;
+                const headR = 14 * s;
+
+                // shadow
+                ctx.fillStyle = "rgba(0,0,0,0.25)";
+                ctx.beginPath();
+                ctx.ellipse(p.x, p.y + bodyH * 0.55, 45 * s, 12 * s, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // body
+                ctx.fillStyle = "rgba(120,180,255,0.85)";
+                roundRect(p.x - bodyW / 2, p.y - bodyH, bodyW, bodyH, 10 * s);
+                ctx.fill();
+
+                // head
+                ctx.fillStyle = "rgba(255,235,210,0.92)";
+                ctx.beginPath();
+                ctx.arc(p.x, p.y - bodyH - headR * 0.6, headR, 0, Math.PI * 2);
+                ctx.fill();
+
+                // gloves (hands)
+                ctx.fillStyle = "rgba(255,255,255,0.95)";
+                const handR = 12 * s;
+                const hx1 = p.x + keeper.diveX * 40 * s;
+                const hy1 = p.y - bodyH * 0.65 + keeper.diveY * 25 * s;
+                const hx2 = p.x + keeper.diveX * 58 * s;
+                const hy2 = p.y - bodyH * 0.45 + keeper.diveY * 38 * s;
+                ctx.beginPath(); ctx.arc(hx1, hy1, handR, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(hx2, hy2, handR * 0.9, 0, Math.PI * 2); ctx.fill();
+            }
+
+            function drawBall() {
+                // trail
+                for (let i = 0; i < ball.trail.length; i++) {
+                    const t = ball.trail[i];
+                    const p = proj(t.x, t.y, t.z);
+                    ctx.fillStyle = `rgba(36,209,143,${0.10 * (i / ball.trail.length)})`;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, Math.max(2, 12 * p.s), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                const p = proj(ball.x, ball.y, ball.z);
+                const r = Math.max(10, 18 * p.s);
+
+                // shadow on grass
+                const shadow = proj(ball.x, 0, ball.z);
+                ctx.fillStyle = "rgba(0,0,0,0.22)";
+                ctx.beginPath();
+                ctx.ellipse(shadow.x, shadow.y + 10 * p.s, r * 1.2, r * 0.4, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // ball gradient
+                const g = ctx.createRadialGradient(p.x - r * 0.35, p.y - r * 0.35, r * 0.2, p.x, p.y, r);
+                g.addColorStop(0, "rgba(255,255,255,0.98)");
+                g.addColorStop(1, "rgba(220,230,255,0.85)");
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+                ctx.fill();
+
+                // panels
+                ctx.strokeStyle = "rgba(0,0,0,0.16)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, r * 0.75, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(p.x - r * 0.9, p.y);
+                ctx.lineTo(p.x + r * 0.9, p.y);
+                ctx.stroke();
+            }
+
+            function roundRect(x, y, w, h, r) {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + w - r, y);
+                ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                ctx.lineTo(x + w, y + h - r);
+                ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                ctx.lineTo(x + r, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+                ctx.closePath();
+            }
+
+            function drawAim() {
+                if (!aiming || !aimStart || !aimNow) return;
+
+                const dx = aimNow.x - aimStart.x;
+                const dy = aimNow.y - aimStart.y;
+
+                ctx.save();
+                ctx.globalAlpha = 0.85;
+
+                // arrow
+                ctx.strokeStyle = "rgba(36,209,143,0.95)";
+                ctx.lineWidth = 6;
+                ctx.lineCap = "round";
+
+                ctx.beginPath();
+                ctx.moveTo(aimStart.x, aimStart.y);
+                ctx.lineTo(aimNow.x, aimNow.y);
+                ctx.stroke();
+
+                // arrow head
+                const ang = Math.atan2(dy, dx);
+                const len = 18;
+                ctx.beginPath();
+                ctx.moveTo(aimNow.x, aimNow.y);
+                ctx.lineTo(aimNow.x - len * Math.cos(ang - 0.45), aimNow.y - len * Math.sin(ang - 0.45));
+                ctx.lineTo(aimNow.x - len * Math.cos(ang + 0.45), aimNow.y - len * Math.sin(ang + 0.45));
+                ctx.closePath();
+                ctx.fillStyle = "rgba(36,209,143,0.95)";
+                ctx.fill();
+
+                // power meter
+                const power = Math.min(1, Math.hypot(dx, dy) / 220);
+                const barW = 220, barH = 10;
+                const bx = canvas.width * 0.5 - barW / 2, by = canvas.height * 0.48;
+                ctx.fillStyle = "rgba(0,0,0,0.35)";
+                roundRect(bx, by, barW, barH, 999);
+                ctx.fill();
+                ctx.fillStyle = power > 0.75 ? "rgba(255,176,32,0.95)" : "rgba(36,209,143,0.95)";
+                roundRect(bx, by, barW * power, barH, 999);
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            // ====== Shot simulation ======
+            function kickFromSwipe(dx, dy) {
+                // drag vector: user drags from ball toward target; we interpret opposite for shot
+                // Upward swipe (negative dy) -> more lift
+                const power = clamp(Math.hypot(dx, dy) / 240, 0.15, 1.0);
+
+                // aim: opposite direction of drag (pull-back slingshot feel is weird),
+                // so we treat drag direction as "toward where you want to shoot".
+                // We'll map dx to x velocity, dy to z and y.
+                const aimX = dx / 240;          // -1..1
+                const aimUp = clamp((-dy) / 260, -0.1, 1.0);  // 0..1 mostly
+
+                // base speed
+                const speed = lerp(18, 33, power); // m/s-ish
+
+                // forward velocity mainly
+                ball.vz = lerp(18, 32, power) * (0.92 + aimUp * 0.08);
+                ball.vz = Math.max(ball.vz, 14);
+                ball.vx = aimX * speed * 0.62;
+                ball.vy = lerp(3.8, 10.5, aimUp) + power * 2.2;
+
+                // curve: sideways drag increases spin
+                // if you swipe to the right, add rightward curve; left swipe = left curve
+                ball.spin = clamp(aimX * power * 7.5, -6.0, 6.0);
+
+                ball.kicked = true;
+                ball.t = 0;
+                keeper.diving = false;
+                keeper.result = "Reading…";
+                $("hudKeeper").textContent = "Reading…";
+
+                // small kick sound
+                beep(260, 0.06);
+            }
+
+            function simulatePredictAtGoal() {
+                // quick copy sim for keeper prediction (no collisions)
+                let x = ball.x, y = ball.y, z = ball.z;
+                let vx = ball.vx, vy = ball.vy, vz = ball.vz;
+                let spin = ball.spin;
+
+                const dt = 1 / 120;
+                for (let i = 0; i < 2000; i++) {
+                    // forces
+                    const g = -9.2;
+                    vy += g * dt;
+                    vx += spin * 0.18 * dt; // curve
+                    // drag
+                    vx *= 0.998;
+                    vy *= 0.998;
+                    vz *= 0.999;
+
+                    x += vx * dt;
+                    y += vy * dt;
+                    z += vz * dt;
+
+                    if (y < ball.r) { y = ball.r; vy *= -0.25; } // ground bounce
+                    if (z >= goalZ) return { x, y, z };
+                }
+                return { x, y, z };
+            }
+
+            function update(dt) {
+                if (!state.started || state.players.length < 2) return;
+
+                // if match ended, stop interactions
+                if (isOver()) {
+                    $("hudResult").textContent = winnerText();
+                    return;
+                }
+
+                // if ball is not kicked, keep it at spot
+                if (!ball.kicked) {
+                    return;
+                }
+
+
+
+                ball.t += dt;
+
+                // ✅ Fail-safe: if ball is flying too long, end the shot as a MISS and reset
+                if (ball.t > 3.0) {
+                    applyShotResult("MISS", "r");
+                    return;
+                }
+
+                // ✅ If ball basically stopped and didn't reach the goal, count as MISS
+                if (ball.z < goalZ - 1 && Math.abs(ball.vz) < 0.8 && ball.t > 0.7) {
+                    applyShotResult("MISS", "r");
+                    return;
+                }
+
+                // store trail
+                if (ball.trail.length > 22) ball.trail.shift();
+                ball.trail.push({ x: ball.x, y: ball.y, z: ball.z });
+
+                // forces
+                const g = -9.2; // gravity
+                ball.vy += g * dt;
+
+                // curve (Magnus-ish)
+                ball.vx += ball.spin * 0.18 * dt;
+
+                // drag
+                ball.vx *= 0.998;
+                ball.vy *= 0.998;
+                ball.vz *= 0.999;
+
+                // integrate
+                ball.x += ball.vx * dt;
+                ball.y += ball.vy * dt;
+                ball.z += ball.vz * dt;
+
+                // ground collision
+                if (ball.y < ball.r) {
+                    ball.y = ball.r;
+                    ball.vy *= -0.25;
+                    ball.vx *= 0.92;
+                    ball.vz *= 0.97;
+                }
+
+                // keeper logic
+                keeper.anim += dt;
+                if (!keeper.diving && ball.t >= keeper.reactAt) {
+                    const pred = simulatePredictAtGoal();
+                    // target point clamped inside goal region
+                    const tx = clamp(pred.x, -halfGoalW * 1.05, halfGoalW * 1.05);
+                    const ty = clamp(pred.y, 0.6, goalH * 0.95);
+
+                    // decide dive direction
+                    keeper.diving = true;
+                    keeper.diveX = clamp(tx / (halfGoalW * 1.2), -1, 1);
+                    keeper.diveY = clamp((ty - 1.0) / 1.2, -0.6, 0.8);
+                    keeper.result = "Diving!";
+                    $("hudKeeper").textContent = "Diving!";
+                }
+
+                // keeper moves while diving (simple)
+                if (keeper.diving) {
+                    // move toward dive direction
+                    keeper.x += keeper.diveX * keeper.speed * dt;
+                    keeper.y += keeper.diveY * keeper.speed * 0.6 * dt;
+
+                    keeper.x = clamp(keeper.x, -halfGoalW * 0.95, halfGoalW * 0.95);
+                    keeper.y = clamp(keeper.y, 0.55, goalH * 0.95);
+                }
+
+                // goal line collision / outcome
+                if (ball.z >= goalZ) {
+                    // check inside goal mouth
+                    const insidePosts = (ball.x > -halfGoalW + ball.r) && (ball.x < halfGoalW - ball.r);
+                    const underBar = (ball.y < goalH - ball.r);
+                    const aboveGround = (ball.y > ball.r);
+
+                    // post/crossbar hit
+                    let hitWoodwork = false;
+                    if (Math.abs(Math.abs(ball.x) - halfGoalW) < ball.r * 1.15 && ball.y < goalH && ball.y > 0) {
+                        hitWoodwork = true;
+                    }
+                    if (Math.abs(ball.y - goalH) < ball.r * 1.15 && Math.abs(ball.x) <= halfGoalW) {
+                        hitWoodwork = true;
+                    }
+
+                    // keeper save check near goal plane
+                    const dx = ball.x - keeper.x;
+                    const dy = ball.y - keeper.y;
+                    const dist = Math.hypot(dx, dy);
+
+                    let outcome = "MISS";
+                    let type = "r";
+
+                    if (hitWoodwork) {
+                        outcome = "WOODWORK!";
+                        type = "y";
+                        beep(780, 0.06);
+                        beep(520, 0.08);
+                    } else if (dist <= keeper.reach) {
+                        outcome = "SAVED!";
+                        type = "r";
+                        beep(180, 0.07);
+                        beep(140, 0.07);
+                    } else if (insidePosts && underBar && aboveGround) {
+                        outcome = "GOAL!";
+                        type = "g";
+                        beep(600, 0.08);
+                        beep(800, 0.10);
+
+                        // net ripple
+                        const hit = proj(ball.x, clamp(ball.y, 0.4, goalH - 0.2), goalZ);
+                        net.hit = true;
+                        net.at = performance.now() / 1000;
+                        net.x = hit.x;
+                        net.y = hit.y;
+                    } else {
+                        outcome = "MISS";
+                        type = "r";
+                        beep(220, 0.06);
+                    }
+
+                    applyShotResult(outcome, type);
+                    return;
+                }
+
+                // clamp extreme z
+                if (ball.z > goalZ + 2) {
+                    applyShotResult("MISS", "r");
+                }
+            }
+
+            function applyShotResult(outcome, type) {
+                const p = currentPlayer();
+
+                // if player is already done, skip
+                if (p.shots >= state.maxShots) {
+                    nextTurn();
+                    return;
+                }
+
+                p.shots++;
+                if (outcome === "GOAL!") p.goals++;
+
+                state.lastOutcome = outcome;
+                $("hudResult").textContent = outcome;
+                $("hudKeeper").textContent = (outcome === "SAVED!") ? "Hero 🧤" : "Resetting…";
+
+                // message
+                if (outcome === "GOAL!") {
+                    banner("ok", "GOAL! ✅", `${p.name} scores!`);
+                } else if (outcome === "SAVED!") {
+                    banner("error", "SAVED! ❌", `Keeper stops ${p.name}.`);
+                } else if (outcome === "WOODWORK!") {
+                    banner("warn", "POST/BAR! 😬", `${p.name} hits the woodwork.`);
+                } else {
+                    banner("error", "MISS ❌", `${p.name} missed.`);
+                }
+
+                save();
+                renderBoard();
+
+                // move to next player and reset ball after a beat
+                setTimeout(() => {
+                    nextTurn();
+                    resetBallAndKeeper();
+                    renderHUD();
+                }, 650);
+            }
+
+            function nextTurn() {
+                state.turn++;
+                // skip players who already completed shots
+                for (let i = 0; i < state.players.length; i++) {
+                    const p = currentPlayer();
+                    if (p.shots < state.maxShots) break;
+                    state.turn++;
+                }
+                save();
+                renderHUD();
+                setStatusPill();
+
+                if (isOver()) {
+                    banner("ok", "Match Finished 🏁", winnerText());
+                    $("hudResult").textContent = winnerText();
+                }
+            }
+
+            function renderHUD() {
+                if (!state.started || state.players.length < 2) {
+                    $("hudShooter").textContent = "—";
+                    $("hudShot").textContent = "0";
+                    $("hudResult").textContent = "—";
+                    return;
+                }
+                const p = currentPlayer();
+                $("hudShooter").textContent = p.name;
+                $("hudShot").textContent = String(Math.min(p.shots, state.maxShots));
+                $("hudResult").textContent = state.lastOutcome || "—";
+            }
+
+            // ====== Controls ======
+            function ballScreenPos() {
+                const p = proj(ball.x, ball.y, ball.z);
+                return { x: p.x, y: p.y, r: Math.max(14, 18 * p.s) };
+            }
+
+            function onPointerDown(e) {
+                if (!state.started || state.players.length < 2) return;
+                if (isOver()) return;
+                if (ball.kicked) return;
+
+                const rect = canvas.getBoundingClientRect();
+                const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+                const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+                const bp = ballScreenPos();
+                const hit = Math.hypot(mx - bp.x, my - bp.y) <= bp.r * 1.35;
+
+                if (!hit) {
+                    banner("warn", "Tap the ball", "Start your swipe from the ball.");
+                    return;
+                }
+
+                clearBanner();
+                aiming = true;
+                aimStart = { x: bp.x, y: bp.y };
+                aimNow = { x: mx, y: my };
+                canvas.setPointerCapture(e.pointerId);
+            }
+
+            function onPointerMove(e) {
+                if (!aiming) return;
+                const rect = canvas.getBoundingClientRect();
+                const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+                const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+                aimNow = { x: mx, y: my };
+            }
+
+            function onPointerUp(e) {
+                if (!aiming) return;
+                aiming = false;
+
+                const dx = aimNow.x - aimStart.x;
+                const dy = aimNow.y - aimStart.y;
+
+                // need minimum swipe
+                if (Math.hypot(dx, dy) < 25) {
+                    banner("warn", "Swipe to shoot", "Drag further for power.");
+                    aimStart = null; aimNow = null;
+                    return;
+                }
+
+                kickFromSwipe(dx, dy);
+                aimStart = null; aimNow = null;
+            }
+
+            function getCanvasXY(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
+                const clientY = (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY;
+
+                const mx = (clientX - rect.left) * (canvas.width / rect.width);
+                const my = (clientY - rect.top) * (canvas.height / rect.height);
+                return { mx, my };
+            }
+
+            function onDown(e) {
+                e.preventDefault?.();
+
+                if (!state.started || state.players.length < 2) {
+                    banner("warn", "Start Match first", "Add 2+ players then press Start Match.");
+                    return;
+                }
+                if (isOver()) return;
+                if (ball.kicked) return;
+
+                const rect = canvas.getBoundingClientRect();
+                const clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
+                const clientY = (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY;
+
+                const mx = (clientX - rect.left) * (canvas.width / rect.width);
+                const my = (clientY - rect.top) * (canvas.height / rect.height);
+
+                clearBanner();
+
+                // ✅ Always start aim from the ball, no matter where user clicks
+                const bp = ballScreenPos();
+                aiming = true;
+                aimStart = { x: bp.x, y: bp.y };
+                aimNow = { x: mx, y: my };
+            }
+
+
+            function onMove(e) {
+                if (!aiming) return;
+                e.preventDefault?.();
+                const { mx, my } = getCanvasXY(e);
+                aimNow = { x: mx, y: my };
+            }
+
+            function onUp(e) {
+                if (!aiming) return;
+                e.preventDefault?.();
+                aiming = false;
+
+                const dx = aimNow.x - aimStart.x;
+                const dy = aimNow.y - aimStart.y;
+
+                if (Math.hypot(dx, dy) < 25) {
+                    banner("warn", "Drag to shoot", "Drag further for power.");
+                    aimStart = null; aimNow = null;
+                    return;
+                }
+
+                kickFromSwipe(dx, dy);
+                aimStart = null; aimNow = null;
+            }
+
+            // Pointer events (best)
+            canvas.addEventListener("pointerdown", onDown);
+            canvas.addEventListener("pointermove", onMove);
+            window.addEventListener("pointerup", onUp);
+            canvas.addEventListener("pointercancel", onUp);
+
+            // Touch fallback (older iOS)
+            canvas.addEventListener("touchstart", onDown, { passive: false });
+            canvas.addEventListener("touchmove", onMove, { passive: false });
+            canvas.addEventListener("touchend", onUp, { passive: false });
+
+            // Mouse fallback (some browsers/settings)
+            canvas.addEventListener("mousedown", onDown);
+            window.addEventListener("mousemove", onMove);
+            window.addEventListener("mouseup", onUp);
+
+
+            // Buttons
+            $("btnNext").addEventListener("click", () => {
+                if (!state.started || state.players.length < 2) return;
+                if (ball.kicked) return;
+                banner("warn", "Turn skipped", `${currentPlayer().name} skipped the shot.`);
+                nextTurn();
+                resetBallAndKeeper();
+                renderBoard();
+            });
+
+            $("btnResetShots").addEventListener("click", () => {
+                if (!confirm("Reset match shots & scores?")) return;
+                for (const p of state.players) {
+                    p.goals = 0;
+                    p.shots = 0;
+                }
+                state.turn = 0;
+                state.started = (state.players.length >= 2);
+                state.lastOutcome = "—";
+                resetBallAndKeeper();
+                save();
+                clearBanner();
+                banner("ok", "Match reset ✅", "Everyone back to 0 shots / 0 goals.");
+                renderBoard();
+                renderHUD();
+            });
+
+            // ====== Player management ======
+            function addPlayer() {
+                const n = ($("name").value || "").trim();
+                if (!n) return;
+                state.players.push({ name: n, goals: 0, shots: 0 });
+                $("name").value = "";
+                save();
+                renderBoard();
+                renderHUD();
+            }
+
+            $("add").addEventListener("click", addPlayer);
+            $("name").addEventListener("keydown", (e) => { if (e.key === "Enter") addPlayer(); });
+
+            $("clearPlayers").addEventListener("click", () => {
+                if (!confirm("Clear all players?")) return;
+                state.players = [];
+                state.started = false;
+                state.turn = 0;
+                state.lastOutcome = "—";
+                resetBallAndKeeper();
+                save();
+                clearBanner();
+                renderBoard();
+                renderHUD();
+            });
+
+            $("start").addEventListener("click", () => {
+                if (state.players.length < 2) {
+                    banner("error", "Add at least 2 players", "Then start the match.");
+                    return;
+                }
+                state.started = true;
+                state.turn = 0;
+
+                // ensure everyone fresh
+                for (const p of state.players) {
+                    p.goals = p.goals || 0;
+                    p.shots = p.shots || 0;
+                }
+
+                resetBallAndKeeper();
+                save();
+                clearBanner();
+                banner("ok", "Match started ✅", `Shooter: ${currentPlayer().name}`);
+                renderBoard();
+                renderHUD();
+            });
+
+            // ====== Render loop ======
+            let last = performance.now();
+            function frame(now) {
+                const dt = Math.min(0.033, (now - last) / 1000);
+                last = now;
+
+                // draw
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawBackground();
+                drawGoalAndNet();
+                drawKeeper();
+                drawBall();
+                drawAim();
+
+                // update physics
+                update(dt);
+
+                requestAnimationFrame(frame);
+            }
+
+            // helpers
+            function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+            function lerp(a, b, t) { return a + (b - a) * t; }
+
+            // boot
+            load();
+            if (!Array.isArray(state.players)) state.players = [];
+            resetBallAndKeeper();
+            renderBoard();
+            renderHUD();
+            requestAnimationFrame(frame);
+        })();
+    </script>
+</body>
+
+</html>
