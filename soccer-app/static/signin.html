@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Verify to Vote</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    :root {
+      --border: rgba(255, 255, 255, .12);
+      --text: #eaf2ff;
+      --muted: rgba(234, 242, 255, .70);
+      --green: #24d18f;
+      --shadow: 0 12px 30px rgba(0, 0, 0, .35);
+      --danger: #ff4d4f;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto;
+      background: linear-gradient(180deg, #050b18, #071224);
+      color: var(--text);
+      padding: 20px;
+    }
+
+    .wrap {
+      max-width: 480px;
+      margin: auto;
+    }
+
+    .card {
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 22px;
+    }
+
+    label {
+      margin-top: 12px;
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.2);
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .btn {
+      margin-top: 16px;
+      padding: 12px;
+      width: 100%;
+      border-radius: 14px;
+      border: none;
+      font-weight: 900;
+      background: var(--green);
+      color: #052012;
+      cursor: pointer;
+    }
+
+    .btn.secondary {
+      background: rgba(255,255,255,.1);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .linkBtn {
+      margin-top: 14px;
+      width: 100%;
+      text-align: center;
+      font-weight: 900;
+      cursor: pointer;
+      color: var(--green);
+      text-decoration: underline;
+    }
+
+    .alert {
+      margin-bottom: 12px;
+      padding: 10px;
+      border-radius: 14px;
+      display: none;
+      font-weight: 900;
+    }
+
+    .alert.ok {
+      background: rgba(36,209,143,.2);
+    }
+
+    .alert.error {
+      background: rgba(255,77,79,.2);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <div id="alert" class="alert"></div>
+
+    <div class="card">
+      <h1>✅ Verify Before Voting</h1>
+
+      <label>First name</label>
+      <input id="vFirstName" placeholder="Your first name" />
+
+      <label>Last name</label>
+      <input id="vLastName" placeholder="Your last name" />
+
+      <label>Secret</label>
+      <input id="vSecret" type="password" placeholder="Your secret" />
+
+      <button class="btn secondary" onclick="verify()">Verify & Vote</button>
+
+      <!-- ALWAYS VISIBLE REGISTER LINK -->
+      <div class="linkBtn" onclick="goToRegister()">
+        New user? Register here
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const alertBox = document.getElementById("alert");
+
+    function showAlert(msg, type) {
+      alertBox.textContent = msg;
+      alertBox.className = "alert " + type;
+      alertBox.style.display = "block";
+    }
+
+    async function hash(text) {
+      const enc = new TextEncoder().encode(text);
+      const buf = await crypto.subtle.digest("SHA-256", enc);
+      return [...new Uint8Array(buf)]
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+    }
+
+    function goToRegister() {
+      window.location.href = "/register";
+    }
+
+    async function verify() {
+      alertBox.style.display = "none";
+
+      const first = document.getElementById("vFirstName").value.trim();
+      const last  = document.getElementById("vLastName").value.trim();
+      const secret = document.getElementById("vSecret").value;
+
+      if (!first || !last || !secret) {
+        showAlert("All fields are required", "error");
+        return;
+      }
+
+      const userKey = `voteUser:${first} ${last}`;
+      const storedHash = localStorage.getItem(userKey);
+
+      if (!storedHash) {
+        showAlert("User not registered", "error");
+        return;
+      }
+
+      const inputHash = await hash(secret);
+
+      if (inputHash !== storedHash) {
+        showAlert("Invalid secret ❌", "error");
+        return;
+      }
+
+      showAlert("Verified! You can vote 🗳️", "ok");
+
+      // Enable when voting page is ready
+      // window.location.href = "/vote.html";
+    }
+  </script>
+</body>
+</html>

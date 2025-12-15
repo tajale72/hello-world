@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Register to Vote</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    :root {
+      --border: rgba(255, 255, 255, .12);
+      --text: #eaf2ff;
+      --muted: rgba(234, 242, 255, .70);
+      --green: #24d18f;
+      --shadow: 0 12px 30px rgba(0, 0, 0, .35);
+      --danger: #ff4d4f;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto;
+      background: linear-gradient(180deg, #050b18, #071224);
+      color: var(--text);
+      padding: 20px;
+    }
+
+    .wrap {
+      max-width: 560px;
+      margin: auto;
+    }
+
+    .card {
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 22px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      color: var(--muted);
+    }
+
+    label {
+      margin-top: 12px;
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.2);
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    /* Smaller inputs for skills */
+    .skill-input {
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .skill {
+      background: rgba(0,0,0,.18);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px;
+    }
+
+    .skill label {
+      margin-top: 0;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .btn {
+      margin-top: 12px;
+      padding: 12px;
+      width: 100%;
+      border-radius: 14px;
+      border: none;
+      font-weight: 900;
+      background: var(--green);
+      color: #052012;
+      cursor: pointer;
+    }
+
+    .alert {
+      margin-bottom: 12px;
+      padding: 10px;
+      border-radius: 14px;
+      display: none;
+      font-weight: 900;
+    }
+
+    .alert.ok { background: rgba(36,209,143,.2); }
+    .alert.error { background: rgba(255,77,79,.2); }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div id="alert" class="alert"></div>
+
+  <!-- BASIC INFO CARD -->
+  <div class="card">
+    <h1>🔐 Register to Vote</h1>
+
+    <label>First name</label>
+    <input id="firstName" />
+
+    <label>Last name</label>
+    <input id="lastName" />
+
+    <label>Position</label>
+    <input id="position" placeholder="Forward, Defender, GK" />
+
+    <label>Secret</label>
+    <input id="secret" type="password" />
+  </div>
+
+  <!-- SKILLS CARD -->
+  <div class="card">
+    <h2>⚽ Player Skills (1–10)</h2>
+
+    <div class="skills-grid">
+      <div class="skill">
+        <label>Speed</label>
+        <input id="skill-speed" class="skill-input" type="number" min="1" max="10" value="6" />
+      </div>
+
+      <div class="skill">
+        <label>Dribbling</label>
+        <input id="skill-dribbling" class="skill-input" type="number" min="1" max="10" value="5" />
+      </div>
+
+      <div class="skill">
+        <label>Shooting</label>
+        <input id="skill-shooting" class="skill-input" type="number" min="1" max="10" value="5" />
+      </div>
+
+      <div class="skill">
+        <label>Defending</label>
+        <input id="skill-defending" class="skill-input" type="number" min="1" max="10" value="5" />
+      </div>
+
+      <div class="skill">
+        <label>Passing</label>
+        <input id="skill-passing" class="skill-input" type="number" min="1" max="10" value="5" />
+      </div>
+    </div>
+
+    <div class="hint">1 = very low, 10 = excellent</div>
+  </div>
+
+  <!-- REGISTER BUTTON -->
+  <button class="btn" onclick="register()">Register</button>
+
+</div>
+
+<script>
+const alertBox = document.getElementById("alert");
+
+function showAlert(msg, type) {
+  alertBox.textContent = msg;
+  alertBox.className = "alert " + type;
+  alertBox.style.display = "block";
+  setTimeout(() => alertBox.style.display = "none", 3000);
+}
+
+async function register() {
+  const firstName = document.getElementById("firstName").value.trim();
+  const lastName  = document.getElementById("lastName").value.trim();
+  const position  = document.getElementById("position").value.trim();
+  const secret    = document.getElementById("secret").value;
+
+  if (!firstName || !lastName || !secret) {
+    showAlert("First name, last name and secret are required", "error");
+    return;
+  }
+
+  const skills = [
+    { name: "speed", value: Number(document.getElementById("skill-speed").value) },
+    { name: "dribbling", value: Number(document.getElementById("skill-dribbling").value) },
+    { name: "shooting", value: Number(document.getElementById("skill-shooting").value) },
+    { name: "defending", value: Number(document.getElementById("skill-defending").value) },
+    { name: "passing", value: Number(document.getElementById("skill-passing").value) }
+  ];
+
+  try {
+    const res = await fetch("/api/v1/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        position,
+        skills,
+        secret
+      })
+    });
+
+    if (!res.ok) {
+      showAlert("Registration failed", "error");
+      return;
+    }
+
+    showAlert("Registered successfully ✔", "ok");
+    setTimeout(() => window.location.href = "/index", 800);
+
+  } catch (err) {
+    console.error(err);
+    showAlert("Network error", "error");
+  }
+}
+</script>
+</body>
+</html>

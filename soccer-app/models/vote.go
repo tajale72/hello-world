@@ -11,7 +11,8 @@ type Vote struct {
 	PollID    primitive.ObjectID `bson:"pollId" json:"pollId"`
 	FirstName string             `bson:"firstName" json:"firstName"`
 	LastName  string             `bson:"lastName" json:"lastName"`
+	Secret    string             `bson:"secret" json:"secret"`
 	Rating    int                `bson:"rating" json:"rating"`
 	Attending bool               `bson:"attending" json:"attending"`
-	CreatedAt time.Time          `bson:"createdAt" json:"createdAt"`
+	UpdatedAt time.Time          `bson:"updatedAt" json:"updatedAt"`
 }

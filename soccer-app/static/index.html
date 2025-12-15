@@ -521,10 +521,9 @@
           <button id="btnNo" type="button">NO ❌</button>
         </div>
 
-        <label>Skill rating</label>
+        <label>Secret</label>
         <div class="ratingRow">
-          <input id="rating" type="range" min="1" max="5" value="3">
-          <div class="ratingVal"><span id="ratingVal">3</span>/5 ⭐</div>
+          <input id="secret" type="text" placeholder="Enter secret">
         </div>
 
         <button id="btnSubmit" class="btn" type="button">Submit Vote</button>
@@ -668,7 +667,7 @@
   </div>
 
   <script>
-    const API_BASE = "https://wraithlike-lena-heartaching.ngrok-free.dev/api/v1";
+    const API_BASE = "http://localhost:8080/api/v1";
 
     // Change these:
     const ADMIN_USERNAME = "admin";
@@ -770,8 +769,6 @@
     $("btnNo").addEventListener("click", () => { attending = false; selectedState(); });
     selectedState();
 
-    $("rating").addEventListener("input", (e) => $("ratingVal").textContent = e.target.value);
-
     // --- Populate time dropdown (every 15 min) ---
     function populateTimeSelect() {
       const sel = $("endsTime");
@@ -828,7 +825,7 @@
         $("playerHint").textContent = "Poll is closed. You can’t vote now.";
         $("btnSubmit").disabled = true;
       } else {
-        $("playerHint").textContent = "Enter name, choose YES/NO, set rating, submit.";
+        $("playerHint").textContent = "Enter name, choose YES/NO, enter secret, submit.";
         $("btnSubmit").disabled = false;
       }
     }
@@ -950,67 +947,102 @@
       updateSubmitState();
     }
 
-    // --- Submit vote ---
-    async function submitVote() {
-      clearAlert();
+  async function submitVote() {
+  clearAlert();
 
-      if (!pollId) {
-        showAlert("error", "No poll available", "Ask Admin to create a poll first.");
-        return;
-      }
-      if (endsAt && (new Date() > endsAt)) {
-        showAlert("error", "Poll is closed", "You can’t vote after the deadline.");
-        return;
-      }
+  if (!pollId) {
+    showAlert("error", "No poll available", "Ask Admin to create a poll first.");
+    return;
+  }
 
-      const firstName = $("firstName").value.trim();
-      const lastName = $("lastName").value.trim();
-      if (!firstName || !lastName) {
-        showAlert("error", "Name is required", "Enter both first name and last name.");
-        return;
-      }
+  if (endsAt && new Date() > endsAt) {
+    showAlert("error", "Poll is closed", "You can’t vote after the deadline.");
+    return;
+  }
 
-      const yesKey = `yes_${pollId}_${normalizeName(firstName)}_${normalizeName(lastName)}`;
-      if (attending === true && localStorage.getItem(yesKey) === "1") {
-        showAlert("warn", "You already voted YES", "If you need to change it, ask Admin (future feature).");
-        return;
-      }
+  const firstName = $("firstName").value.trim();
+  const lastName  = $("lastName").value.trim();
+  const secret    = $("secret").value.trim();
 
-      $("btnSubmit").disabled = true;
-      $("btnSubmit").textContent = "Submitting…";
+  if (!firstName || !lastName || !secret) {
+    showAlert(
+      "error",
+      "Missing information",
+      "First name, last name, and secret are required."
+    );
+    return;
+  }
 
-      const payload = { pollId, firstName, lastName, rating: Number($("rating").value), attending };
+  $("btnSubmit").disabled = true;
+  $("btnSubmit").textContent = "Submitting…";
 
-      const res = await fetch(`${API_BASE}/votes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+  const yesKey = `yes_${pollId}_${normalizeName(firstName)}_${normalizeName(lastName)}`;
 
-      if (res.status === 409) {
-        showAlert("warn", "You already voted YES", "Only one YES vote per person is allowed.");
-        $("btnSubmit").disabled = false;
-        $("btnSubmit").textContent = "Submit Vote";
-        return;
-      }
-      if (res.status === 403) {
-        showAlert("error", "Poll is closed", "Deadline passed.");
-        $("btnSubmit").disabled = true;
-        $("btnSubmit").textContent = "Poll Closed";
-        return;
-      }
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        showAlert("error", "Vote failed", txt || "Try again.");
-        $("btnSubmit").disabled = false;
-        $("btnSubmit").textContent = "Submit Vote";
-        return;
-      }
+  const payload = {
+    pollId,
+    firstName,
+    lastName,
+    secret,
+    attending
+  };
 
-      if (attending === true) localStorage.setItem(yesKey, "1");
-      showAlert("ok", "Vote submitted ✅", attending ? "You voted YES." : "You voted NO.");
-      $("btnSubmit").textContent = "Submitted ✅";
+  try {
+    const res = await fetch(`${API_BASE}/votes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    // 🔐 Invalid secret
+    if (res.status === 403) {
+      showAlert("error", "Invalid secret", "Secret does not match registration.");
+      return;
     }
+
+    // ⚠️ Conflict (already voted YES)
+    if (res.status === 409) {
+      if (attending === true) {
+        showAlert(
+          "warn",
+          "Already voted YES",
+          "You already voted YES. Switch to NO if you changed your mind."
+        );
+        return;
+      }
+
+      // ✅ YES → NO is allowed → treat as success
+    }
+
+    // ❌ Any other error
+    if (!res.ok && res.status !== 409) {
+      const txt = await res.text().catch(() => "");
+      showAlert("error", "Vote failed", txt || "Try again.");
+      return;
+    }
+
+    // ✅ SUCCESS (200 or allowed 409)
+    if (attending === true) {
+      localStorage.setItem(yesKey, "1");
+    } else {
+      localStorage.removeItem(yesKey);
+    }
+
+    showAlert(
+      "ok",
+      "Vote submitted ✅",
+      attending ? "You voted YES." : "You voted NO."
+    );
+
+    $("btnSubmit").textContent = "Submitted ✅";
+
+  } catch (err) {
+    console.error(err);
+    showAlert("error", "Network error", "Unable to reach server.");
+  } finally {
+    $("btnSubmit").disabled = false;
+  }
+}
+
 
     // --- Teams (shared) ---
     async function fetchTeams(forWho) {

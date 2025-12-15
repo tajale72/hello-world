@@ -11,59 +11,64 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func SubmitVote(db *mongo.Database) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var v models.Vote
-		if err := c.ShouldBindJSON(&v); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input"})
-			return
+		var req struct {
+			PollID    primitive.ObjectID `json:"pollId"`
+			FirstName string             `json:"firstName"`
+			LastName  string             `json:"lastName"`
+			Secret    string             `json:"secret"`
+			Rating    int                `json:"rating"`
+			Attending bool               `json:"attending"`
 		}
-		var poll models.Poll
-		if err := db.Collection("polls").FindOne(context.Background(), bson.M{"_id": v.PollID}).Decode(&poll); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "poll not found"})
-			return
-		}
-		if time.Now().After(poll.EndsAt) || poll.Status != "OPEN" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "poll closed"})
+
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
 
-		// convert pollId string to ObjectID
-		pollOID, err := primitive.ObjectIDFromHex(v.PollID.Hex())
+		// 🔐 Verify user
+		var user models.User
+		err := db.Collection("users").FindOne(
+			context.Background(),
+			bson.M{
+				"firstName":  req.FirstName,
+				"lastName":   req.LastName,
+				"secretHash": hashSecret(req.Secret),
+			},
+		).Decode(&user)
+
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll id"})
-			return
-		}
-		v.PollID = pollOID
-
-		// prevent duplicate YES votes
-		if v.Attending {
-			count, _ := db.Collection("votes").CountDocuments(context.Background(), bson.M{
-				"pollId":    v.PollID,
-				"firstName": v.FirstName,
-				"lastName":  v.LastName,
-				"attending": true,
-			})
-			if count > 0 {
-				c.JSON(http.StatusConflict, gin.H{"error": "already voted yes"})
-				return
-			}
-		}
-
-		if err := db.Collection("polls").FindOne(context.Background(), bson.M{"_id": v.PollID}).Decode(&poll); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "poll not found"})
-			return
-		}
-		if time.Now().After(poll.EndsAt) || poll.Status != "OPEN" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "poll closed"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 			return
 		}
 
-		v.CreatedAt = time.Now()
-		if _, err := db.Collection("votes").InsertOne(context.Background(), v); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "db insert failed"})
+		filter := bson.M{
+			"pollId":    req.PollID,
+			"firstName": req.FirstName,
+			"lastName":  req.LastName,
+		}
+
+		update := bson.M{
+			"$set": bson.M{
+				"rating":    req.Rating,
+				"attending": req.Attending,
+				"updatedAt": time.Now(),
+			},
+		}
+
+		opts := options.Update().SetUpsert(true)
+
+		if _, err := db.Collection("votes").UpdateOne(
+			context.Background(),
+			filter,
+			update,
+			opts,
+		); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "vote failed"})
 			return
 		}
 
