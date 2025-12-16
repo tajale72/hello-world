@@ -30,6 +30,8 @@ func main() {
 	corsCfg.ExposeHeaders = []string{"Content-Length", "Content-Type"}
 	r.Use(cors.New(corsCfg))
 
+	r.Use(RateLimitMiddleware(100)) // 100 requests per minute
+
 	// ✅ Serve static files
 	r.Static("/static", "./static")
 
@@ -72,4 +74,18 @@ func main() {
 
 	log.Println("Server running on :8080")
 	log.Fatal(r.Run(":8080"))
+}
+
+// RateLimitMiddleware limits the number of requests per minute
+func RateLimitMiddleware(maxRequestsPerMinute int) gin.HandlerFunc {
+	visitors := make(map[string]int)
+	return func(c *gin.Context) {
+		clientIP := c.ClientIP()
+		visitors[clientIP]++
+		if visitors[clientIP] > maxRequestsPerMinute {
+			c.AbortWithStatusJSON(429, gin.H{"error": "too many requests"})
+			return
+		}
+		c.Next()
+	}
 }
