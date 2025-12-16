@@ -667,7 +667,7 @@
   </div>
 
   <script>
-    const API_BASE = "https://wraithlike-lena-heartaching.ngrok-free.dev/api/v1";
+    const API_BASE = "http://localhost:8080/api/v1";
 
     // Change these:
     const ADMIN_USERNAME = "admin";
@@ -947,101 +947,101 @@
       updateSubmitState();
     }
 
-  async function submitVote() {
-  clearAlert();
+    async function submitVote() {
+      clearAlert();
 
-  if (!pollId) {
-    showAlert("error", "No poll available", "Ask Admin to create a poll first.");
-    return;
-  }
+      if (!pollId) {
+        showAlert("error", "No poll available", "Ask Admin to create a poll first.");
+        return;
+      }
 
-  if (endsAt && new Date() > endsAt) {
-    showAlert("error", "Poll is closed", "You can’t vote after the deadline.");
-    return;
-  }
+      if (endsAt && new Date() > endsAt) {
+        showAlert("error", "Poll is closed", "You can’t vote after the deadline.");
+        return;
+      }
 
-  const firstName = $("firstName").value.trim();
-  const lastName  = $("lastName").value.trim();
-  const secret    = $("secret").value.trim();
+      const firstName = $("firstName").value.trim();
+      const lastName = $("lastName").value.trim();
+      const secret = $("secret").value.trim();
 
-  if (!firstName || !lastName || !secret) {
-    showAlert(
-      "error",
-      "Missing information",
-      "First name, last name, and secret are required."
-    );
-    return;
-  }
-
-  $("btnSubmit").disabled = true;
-  $("btnSubmit").textContent = "Submitting…";
-
-  const yesKey = `yes_${pollId}_${normalizeName(firstName)}_${normalizeName(lastName)}`;
-
-  const payload = {
-    pollId,
-    firstName,
-    lastName,
-    secret,
-    attending
-  };
-
-  try {
-    const res = await fetch(`${API_BASE}/votes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    // 🔐 Invalid secret
-    if (res.status === 403) {
-      showAlert("error", "Invalid secret", "Secret does not match registration.");
-      return;
-    }
-
-    // ⚠️ Conflict (already voted YES)
-    if (res.status === 409) {
-      if (attending === true) {
+      if (!firstName || !lastName || !secret) {
         showAlert(
-          "warn",
-          "Already voted YES",
-          "You already voted YES. Switch to NO if you changed your mind."
+          "error",
+          "Missing information",
+          "First name, last name, and secret are required."
         );
         return;
       }
 
-      // ✅ YES → NO is allowed → treat as success
+      $("btnSubmit").disabled = true;
+      $("btnSubmit").textContent = "Submitting…";
+
+      const yesKey = `yes_${pollId}_${normalizeName(firstName)}_${normalizeName(lastName)}`;
+
+      const payload = {
+        pollId,
+        firstName,
+        lastName,
+        secret,
+        attending
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/votes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        // 🔐 Invalid secret
+        if (res.status === 403) {
+          showAlert("error", "Invalid secret", "Secret does not match registration.");
+          return;
+        }
+
+        // ⚠️ Conflict (already voted YES)
+        if (res.status === 409) {
+          if (attending === true) {
+            showAlert(
+              "warn",
+              "Already voted YES",
+              "You already voted YES. Switch to NO if you changed your mind."
+            );
+            return;
+          }
+
+          // ✅ YES → NO is allowed → treat as success
+        }
+
+        // ❌ Any other error
+        if (!res.ok && res.status !== 409) {
+          const txt = await res.text().catch(() => "");
+          showAlert("error", "Vote failed", txt || "Try again.");
+          return;
+        }
+
+        // ✅ SUCCESS (200 or allowed 409)
+        if (attending === true) {
+          localStorage.setItem(yesKey, "1");
+        } else {
+          localStorage.removeItem(yesKey);
+        }
+
+        showAlert(
+          "ok",
+          "Vote submitted ✅",
+          attending ? "You voted YES." : "You voted NO."
+        );
+
+        $("btnSubmit").textContent = "Submitted ✅";
+
+      } catch (err) {
+        console.error(err);
+        showAlert("error", "Network error", "Unable to reach server.");
+      } finally {
+        $("btnSubmit").disabled = false;
+      }
     }
-
-    // ❌ Any other error
-    if (!res.ok && res.status !== 409) {
-      const txt = await res.text().catch(() => "");
-      showAlert("error", "Vote failed", txt || "Try again.");
-      return;
-    }
-
-    // ✅ SUCCESS (200 or allowed 409)
-    if (attending === true) {
-      localStorage.setItem(yesKey, "1");
-    } else {
-      localStorage.removeItem(yesKey);
-    }
-
-    showAlert(
-      "ok",
-      "Vote submitted ✅",
-      attending ? "You voted YES." : "You voted NO."
-    );
-
-    $("btnSubmit").textContent = "Submitted ✅";
-
-  } catch (err) {
-    console.error(err);
-    showAlert("error", "Network error", "Unable to reach server.");
-  } finally {
-    $("btnSubmit").disabled = false;
-  }
-}
 
 
     // --- Teams (shared) ---
@@ -1103,16 +1103,66 @@
     }
 
     function renderTeamList(listId, players) {
-      const ul = $(listId);
+      const ul = document.getElementById(listId);
+      if (!ul) {
+        console.error("List not found:", listId);
+        return;
+      }
+
       ul.innerHTML = "";
+
       for (const p of players) {
-        const name = (p.name ?? "Player").trim() || "Player";
-        const rating = (p.rating ?? "-");
+        // Name
+        const name =
+          `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || "Player";
+
+        // Position
+        const position = p.position || "—";
+
+        // Skills
+        const skills = Array.isArray(p.skills) ? p.skills : [];
+
+        // ⭐ Average rating from skills
+        const total = skills.reduce(
+          (sum, s) => sum + (Number(s.value) || 0),
+          0
+        );
+        const rating =
+          skills.length > 0 ? (total / skills.length).toFixed(1) : "—";
+
+        // Render skill rows (text-only for now)
+        const skillRows = skills
+          .map(
+            (s) => `
+          <div class="skill-row">
+            <span class="skill-name">${escapeHtml(s.name)}</span>
+            <span class="skill-value">${s.value}</span>
+          </div>
+        `
+          )
+          .join("");
+
         const li = document.createElement("li");
-        li.innerHTML = `<span>${escapeHtml(name)}</span><span class="tag">⭐ ${escapeHtml(String(rating))}</span>`;
+        li.className = "player-card";
+
+        li.innerHTML = `
+      <div class="player-header">
+        <div>
+          <div class="player-name">${escapeHtml(name)}</div>
+        </div>
+        <div class="player-rating">⭐ ${rating}</div>
+      </div>
+
+      <div class="player-skills">
+        <div class="player-position">${escapeHtml(position)}</div>
+      </div>
+    `;
+
         ul.appendChild(li);
       }
     }
+
+
 
     function escapeHtml(s) {
       return String(s).replace(/[&<>"']/g, (m) => ({

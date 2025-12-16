@@ -2,9 +2,8 @@ package handlers
 
 import (
 	"context"
+	"math/rand"
 	"net/http"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,8 +15,10 @@ import (
 )
 
 type PlayerRating struct {
-	Name   string  `json:"name"`
-	Rating float64 `json:"rating"`
+	Name     string         `json:"name"`
+	Skills   []models.Skill `json:"skills,omitempty"`
+	Position string         `json:"position,omitempty"`
+	Rating   float64        `json:"rating"`
 }
 
 type voteDoc struct {
@@ -28,9 +29,16 @@ type voteDoc struct {
 	PollID    primitive.ObjectID `bson:"pollId"`
 }
 
+type TeamPlayer struct {
+	UserID    primitive.ObjectID `json:"userId"`
+	FirstName string             `json:"firstName"`
+	LastName  string             `json:"lastName"`
+	Position  string             `json:"position"`
+	Skills    []models.Skill     `json:"skills"`
+}
+
 func GenerateTeams(db *mongo.Database) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 1) Parse poll id
 		pollHex := c.Param("id")
 		pollOID, err := primitive.ObjectIDFromHex(pollHex)
 		if err != nil {
@@ -38,56 +46,88 @@ func GenerateTeams(db *mongo.Database) gin.HandlerFunc {
 			return
 		}
 
-		// ✅ 2) Load poll so `poll` is defined (fixes your compile error)
+		// 1️⃣ Load poll
 		var poll models.Poll
-		if err := db.Collection("polls").FindOne(context.Background(), bson.M{"_id": pollOID}).Decode(&poll); err != nil {
+		if err := db.Collection("polls").
+			FindOne(context.Background(), bson.M{"_id": pollOID}).
+			Decode(&poll); err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "poll not found"})
 			return
 		}
 
-		// (Optional) if you want to block team generation after close:
-		// if time.Now().After(poll.EndsAt) || poll.Status != "OPEN" {
-		// 	c.JSON(http.StatusForbidden, gin.H{"error": "poll closed"})
-		// 	return
-		// }
-
-		// 3) Fetch ALL YES votes for this poll
-		cur, err := db.Collection("votes").Find(context.Background(), bson.M{
-			"pollId":    pollOID,
-			"attending": true,
-		})
+		// 2️⃣ Load YES votes
+		cur, err := db.Collection("votes").Find(
+			context.Background(),
+			bson.M{
+				"pollId":    pollOID,
+				"attending": true,
+			},
+		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
 			return
 		}
 		defer cur.Close(context.Background())
 
-		votes := make([]voteDoc, 0)
+		var votes []struct {
+			UserID primitive.ObjectID `bson:"userId"`
+		}
 		if err := cur.All(context.Background(), &votes); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "decode error"})
 			return
 		}
 
-		// 4) Build player list
-		players := make([]PlayerRating, 0, len(votes))
+		if len(votes) == 0 {
+			c.JSON(http.StatusOK, gin.H{
+				"yesCount": 0,
+				"teamA":    []TeamPlayer{},
+				"teamB":    []TeamPlayer{},
+			})
+			return
+		}
+
+		// 3️⃣ Fetch users by IDs
+		userIDs := make([]primitive.ObjectID, 0, len(votes))
 		for _, v := range votes {
-			full := strings.TrimSpace(v.FirstName + " " + v.LastName)
-			if full == "" {
-				full = "Anonymous"
-			}
-			players = append(players, PlayerRating{
-				Name:   full,
-				Rating: float64(v.Rating),
+			userIDs = append(userIDs, v.UserID)
+		}
+
+		userCur, err := db.Collection("users").Find(
+			context.Background(),
+			bson.M{"_id": bson.M{"$in": userIDs}},
+		)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load users"})
+			return
+		}
+		defer userCur.Close(context.Background())
+
+		var users []models.User
+		if err := userCur.All(context.Background(), &users); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "user decode error"})
+			return
+		}
+
+		// 4️⃣ Convert users → team players
+		players := make([]TeamPlayer, 0, len(users))
+		for _, u := range users {
+			players = append(players, TeamPlayer{
+				UserID:    u.UserID,
+				FirstName: u.FirstName,
+				LastName:  u.LastName,
+				Position:  u.Position,
+				Skills:    u.Skills,
 			})
 		}
 
-		// 5) Sort and split into teams
-		sort.Slice(players, func(i, j int) bool {
-			return players[i].Rating > players[j].Rating
+		// 5️⃣ Shuffle for fairness (skills used later)
+		rand.Seed(time.Now().UnixNano())
+		rand.Shuffle(len(players), func(i, j int) {
+			players[i], players[j] = players[j], players[i]
 		})
 
-		teamA := make([]PlayerRating, 0)
-		teamB := make([]PlayerRating, 0)
+		teamA := []TeamPlayer{}
+		teamB := []TeamPlayer{}
 
 		for i, p := range players {
 			if i%2 == 0 {
@@ -97,7 +137,7 @@ func GenerateTeams(db *mongo.Database) gin.HandlerFunc {
 			}
 		}
 
-		// 6) Return teams + YES count + timestamps + poll deadline info
+		// 6️⃣ Respond
 		c.JSON(http.StatusOK, gin.H{
 			"yesCount":    len(players),
 			"teamA":       teamA,

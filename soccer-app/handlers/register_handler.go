@@ -25,7 +25,7 @@ var allowedSkills = map[string]bool{
 	"stamina":   true,
 }
 
-func hashSecret(secret string) string {
+func HashSecret(secret string) string {
 	sum := sha256.Sum256([]byte(secret))
 	return hex.EncodeToString(sum[:])
 }
@@ -86,7 +86,7 @@ func RegisterUser(db *mongo.Database) gin.HandlerFunc {
 			"$setOnInsert": bson.M{
 				"firstName":  req.FirstName,
 				"lastName":   req.LastName,
-				"secretHash": hashSecret(req.Secret),
+				"secretHash": HashSecret(req.Secret),
 				"createdAt":  time.Now(),
 			},
 			"$set": bson.M{

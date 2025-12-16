@@ -17,6 +17,7 @@ import (
 func SubmitVote(db *mongo.Database) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
+			UserID    primitive.ObjectID `json:"userId"`
 			PollID    primitive.ObjectID `json:"pollId"`
 			FirstName string             `json:"firstName"`
 			LastName  string             `json:"lastName"`
@@ -30,33 +31,44 @@ func SubmitVote(db *mongo.Database) gin.HandlerFunc {
 			return
 		}
 
-		// 🔐 Verify user
+		// 🔐 Verify user + secret
 		var user models.User
 		err := db.Collection("users").FindOne(
 			context.Background(),
 			bson.M{
 				"firstName":  req.FirstName,
 				"lastName":   req.LastName,
-				"secretHash": hashSecret(req.Secret),
+				"secretHash": HashSecret(req.Secret),
 			},
 		).Decode(&user)
 
-		if err != nil {
+		if err == mongo.ErrNoDocuments {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 			return
 		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+			return
+		}
 
+		// 🔁 Upsert vote + ADD userId
 		filter := bson.M{
-			"pollId":    req.PollID,
-			"firstName": req.FirstName,
-			"lastName":  req.LastName,
+			"pollId": req.PollID,
+			"userId": user.UserID, // 🔑 ensures one vote per user per poll
 		}
 
 		update := bson.M{
 			"$set": bson.M{
+				"pollId":    req.PollID,
+				"userId":    user.UserID, // ✅ NEW FIELD
+				"firstName": req.FirstName,
+				"lastName":  req.LastName,
 				"rating":    req.Rating,
 				"attending": req.Attending,
 				"updatedAt": time.Now(),
+			},
+			"$setOnInsert": bson.M{
+				"createdAt": time.Now(),
 			},
 		}
 

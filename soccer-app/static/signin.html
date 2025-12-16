@@ -70,12 +70,6 @@
       cursor: pointer;
     }
 
-    .btn.secondary {
-      background: rgba(255,255,255,.1);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
     .linkBtn {
       margin-top: 14px;
       width: 100%;
@@ -94,96 +88,102 @@
       font-weight: 900;
     }
 
-    .alert.ok {
-      background: rgba(36,209,143,.2);
-    }
-
-    .alert.error {
-      background: rgba(255,77,79,.2);
-    }
+    .alert.ok { background: rgba(36,209,143,.2); }
+    .alert.error { background: rgba(255,77,79,.2); }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
+<div class="wrap">
 
-    <div id="alert" class="alert"></div>
+  <div id="alert" class="alert"></div>
 
-    <div class="card">
-      <h1>✅ Verify Before Voting</h1>
+  <div class="card">
+    <h1>✅ Login to Vote</h1>
 
-      <label>First name</label>
-      <input id="vFirstName" placeholder="Your first name" />
+    <label>First name</label>
+    <input id="firstName" placeholder="Your first name" />
 
-      <label>Last name</label>
-      <input id="vLastName" placeholder="Your last name" />
+    <label>Last name</label>
+    <input id="lastName" placeholder="Your last name" />
 
-      <label>Secret</label>
-      <input id="vSecret" type="password" placeholder="Your secret" />
+    <label>Secret</label>
+    <input id="secret" type="password" placeholder="Your secret" />
 
-      <button class="btn secondary" onclick="verify()">Verify & Vote</button>
+    <button class="btn" onclick="login()">Login & Vote</button>
 
-      <!-- ALWAYS VISIBLE REGISTER LINK -->
-      <div class="linkBtn" onclick="goToRegister()">
-        New user? Register here
-      </div>
+    <div class="linkBtn" onclick="goToRegister()">
+      New user? Register here
     </div>
-
   </div>
 
-  <script>
-    const alertBox = document.getElementById("alert");
+</div>
 
-    function showAlert(msg, type) {
-      alertBox.textContent = msg;
-      alertBox.className = "alert " + type;
-      alertBox.style.display = "block";
+<script>
+const API_BASE = "http://localhost:8080/api/v1";
+const alertBox = document.getElementById("alert");
+
+function showAlert(msg, type) {
+  alertBox.textContent = msg;
+  alertBox.className = "alert " + type;
+  alertBox.style.display = "block";
+}
+
+function goToRegister() {
+  window.location.href = "/register";
+}
+
+async function login() {
+  alertBox.style.display = "none";
+
+  const firstName = document.getElementById("firstName").value.trim();
+  const lastName  = document.getElementById("lastName").value.trim();
+  const secret    = document.getElementById("secret").value.trim();
+
+  if (!firstName || !lastName || !secret) {
+    showAlert("All fields are required", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ firstName, lastName, secret })
+    });
+
+    if (res.status === 404) {
+      showAlert("User not registered", "error");
+      return;
     }
 
-    async function hash(text) {
-      const enc = new TextEncoder().encode(text);
-      const buf = await crypto.subtle.digest("SHA-256", enc);
-      return [...new Uint8Array(buf)]
-        .map(b => b.toString(16).padStart(2, "0"))
-        .join("");
+    if (res.status === 403) {
+      showAlert("Invalid secret ❌", "error");
+      return;
     }
 
-    function goToRegister() {
-      window.location.href = "/register";
+    if (!res.ok) {
+      showAlert("Login failed", "error");
+      return;
     }
 
-    async function verify() {
-      alertBox.style.display = "none";
+    // ✅ LOGIN SUCCESS
+    sessionStorage.setItem("user", JSON.stringify({
+      firstName,
+      lastName
+    }));
 
-      const first = document.getElementById("vFirstName").value.trim();
-      const last  = document.getElementById("vLastName").value.trim();
-      const secret = document.getElementById("vSecret").value;
+    showAlert("Login successful ✅ Redirecting…", "ok");
 
-      if (!first || !last || !secret) {
-        showAlert("All fields are required", "error");
-        return;
-      }
+    setTimeout(() => {
+      window.location.href = "/index";
+    }, 800);
 
-      const userKey = `voteUser:${first} ${last}`;
-      const storedHash = localStorage.getItem(userKey);
-
-      if (!storedHash) {
-        showAlert("User not registered", "error");
-        return;
-      }
-
-      const inputHash = await hash(secret);
-
-      if (inputHash !== storedHash) {
-        showAlert("Invalid secret ❌", "error");
-        return;
-      }
-
-      showAlert("Verified! You can vote 🗳️", "ok");
-
-      // Enable when voting page is ready
-      // window.location.href = "/vote.html";
-    }
-  </script>
+  } catch (err) {
+    console.error(err);
+    showAlert("Network error", "error");
+  }
+}
+</script>
 </body>
 </html>

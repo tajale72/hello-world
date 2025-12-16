@@ -65,6 +65,9 @@ func main() {
 		// auth & voting
 		api.POST("/register", handlers.RegisterUser(db))
 		api.POST("/votes", handlers.SubmitVote(db))
+
+		api.POST("/login", handlers.LoginUser(db))
+
 	}
 
 	log.Println("Server running on :8080")
