@@ -3,8 +3,9 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>⚽ Saturday Soccer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>⚽ Saturday Soccer – Teams</title>
+
 
   <style>
     :root {
@@ -470,219 +471,553 @@
 
     }
   </style>
+
+  <style>
+    :root {
+      --border: rgba(255, 255, 255, .12);
+      --text: #eaf2ff;
+      --muted: rgba(234, 242, 255, .70);
+      --green: #24d18f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: #0b1220;
+      color: var(--text);
+      padding: 16px;
+    }
+
+    /* =========================
+       PAGE LAYOUT
+    ========================= */
+    .page {
+      display: flex;
+      gap: 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* LEFT COLUMN */
+    .leftPane {
+      flex: 0 0 40%;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      min-height: 600px;
+    }
+
+    .leftPane h2 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    /* RIGHT COLUMN (TEAMS) */
+    .rightPane {
+      flex: 1;
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .pill {
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .teamCard {
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      min-height: 420px;
+    }
+
+    .teamHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    ul.dropzone {
+      list-style: none;
+      padding: 8px;
+      margin: 0;
+      min-height: 300px;
+      border-radius: 12px;
+      border: 1px dashed rgba(255, 255, 255, .15);
+      background: rgba(0, 0, 0, .2);
+    }
+
+    ul.dropzone.over {
+      border-color: var(--green);
+      background: rgba(36, 209, 143, .12);
+    }
+
+    li.player {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .15);
+      cursor: grab;
+    }
+
+    li.player.dragging {
+      opacity: .4;
+    }
+
+    li.placeholder {
+      height: 44px;
+      border: 2px dashed rgba(255, 255, 255, .25);
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+
+    .name {
+      font-weight: 700;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .toast {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .busy {
+      pointer-events: none;
+      opacity: .6;
+    }
+
+    /* =========================
+       MOBILE
+    ========================= */
+    @media (max-width: 900px) {
+      .page {
+        flex-direction: column;
+      }
+
+      .leftPane {
+        width: 100%;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-  <div class="container">
-    <div id="teamsContainer"></div>
+  <div class="page">
+
+    <!-- LEFT SIDE -->
+    <div class="leftPane">
+      <div class="wrap">
+
+        <!-- Visible alerts -->
+        <div id="alert" class="alert">
+          <div class="msg" id="alertMsg"></div>
+          <button class="x" id="alertClose" type="button">Close</button>
+        </div>
+
+        <div class="top">
+          <div class="brand">
+            <h1>⚽ Saturday Soccer</h1>
+            <div class="sub">Players vote • Admin creates poll • Fair teams</div>
+          </div>
+
+          <div class="top-right">
+            <div class="pill" id="pollPill">Loading…</div>
+            <a class="pill pill-link" id="pollGame" href="/game">🎮 Join Game</a>
+          </div>
+        </div>
+
+
+        <div class="seg">
+          <button id="tabPlayer" class="active" type="button">Player</button>
+          <button id="tabAdmin" type="button">Admin</button>
+        </div>
+
+        <!-- PLAYER VIEW -->
+        <div id="playerView">
+          <div class="card">
+            <h2>Player Vote</h2>
+            <div class="hint" id="playerHint">Enter name, choose YES/NO, set rating, submit.</div>
+
+            <div class="row">
+              <div class="col">
+                <label>First name</label>
+                <input id="firstName" type="text" placeholder="e.g., Romit" autocomplete="given-name">
+              </div>
+              <div class="col">
+                <label>Last name</label>
+                <input id="lastName" type="text" placeholder="e.g., Tajale" autocomplete="family-name">
+              </div>
+            </div>
+
+            <label>Playing this Saturday?</label>
+            <div class="choice">
+              <button id="btnYes" type="button">YES ✅</button>
+              <button id="btnNo" type="button">NO ❌</button>
+            </div>
+
+            <label>Secret</label>
+            <div class="ratingRow">
+              <input id="secret" type="text" placeholder="Enter secret">
+            </div>
+
+            <button id="btnSubmit" class="btn" type="button">Submit Vote</button>
+          </div>
+
+          <!-- Players can see teams -->
+          <div class="card">
+            <h2>Teams</h2>
+            <div class="hint">When teams are generated, everyone can view them here.</div>
+
+            <div class="stats">
+              <div class="stat">
+                <div class="k">YES count</div>
+                <div class="v" id="yesCountPlayer">0</div>
+              </div>
+              <div class="stat">
+                <div class="k">Generated at</div>
+                <div class="v" id="generatedAtPlayer">—</div>
+              </div>
+            </div>
+
+            <button id="btnTeamsPlayer" class="btn secondary" type="button">Refresh Teams</button>
+
+
+            <div class="teamsWrap" id="teamsWrapPlayer">
+              <div class="team">
+                <h3>Team A</h3>
+                <ul id="teamAPlayer"></ul>
+              </div>
+              <div class="team">
+                <h3>Team B</h3>
+                <ul id="teamBPlayer"></ul>
+              </div>
+            </div>
+
+            <div class="hint" id="teamsHintPlayer" style="margin-top:10px;">Tap “Refresh Teams” to view.</div>
+          </div>
+        </div>
+
+        <!-- ADMIN VIEW -->
+        <div id="adminView" style="display:none;">
+          <div class="card">
+            <h2>Create Poll</h2>
+            <div class="hint">
+              Pick the <b>Poll Date</b> (Saturday). Then pick <b>Poll End Date</b> from calendar and <b>Poll End
+                Time</b>
+              from dropdown.
+              Example: end Friday at <b>8:00 PM</b>.
+            </div>
+
+            <label>Poll date (Saturday)</label>
+            <input id="pollDate" type="date">
+
+            <div class="row">
+              <div class="col">
+                <label>Poll end date</label>
+                <input id="endsDate" type="date">
+              </div>
+              <div class="col">
+                <label>Poll end time</label>
+                <select id="endsTime"></select>
+              </div>
+            </div>
+
+            <div class="stats">
+              <div class="stat">
+                <div class="k">Poll ends at</div>
+                <div class="v" id="endsPreview">—</div>
+              </div>
+              <div class="stat">
+                <div class="k">Countdown</div>
+                <div class="v" id="countdown">—</div>
+              </div>
+            </div>
+
+            <button id="btnCreatePoll" class="btn" type="button">Create Poll</button>
+            <button id="btnReload" class="btn secondary" type="button">Reload Poll Info</button>
+          </div>
+
+          <div class="card">
+            <h2>Team Generator</h2>
+            <div class="hint">Includes <b>all YES voters</b>. Shows YES count when you generate teams.</div>
+
+            <div class="stats">
+              <div class="stat">
+                <div class="k">YES count</div>
+                <div class="v" id="yesCountAdmin">0</div>
+              </div>
+              <div class="stat">
+                <div class="k">Generated at</div>
+                <div class="v" id="generatedAtAdmin">—</div>
+              </div>
+            </div>
+
+            <button id="btnTeamsAdmin" class="btn" type="button">Generate Teams</button>
+
+            <div class="teamsWrap" id="teamsWrapAdmin">
+              <div class="team">
+                <h3>Team A</h3>
+                <ul id="teamAAdmin"></ul>
+              </div>
+              <div class="team">
+                <h3>Team B</h3>
+                <ul id="teamBAdmin"></ul>
+              </div>
+            </div>
+
+            <div class="hint" id="teamsHintAdmin" style="margin-top:10px;">Generate teams to see the lineup.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Login Modal -->
+      <div id="adminModal">
+        <div class="modalBox">
+          <div class="modalTop">
+            <div>
+              <div class="modalTitle">Admin Login</div>
+              <div class="modalSub">Enter credentials to access Admin tools.</div>
+            </div>
+            <button id="adminClose" class="iconBtn" type="button">✕</button>
+          </div>
+
+          <div style="margin-top:14px;">
+            <label>Username</label>
+            <input id="adminUser" type="text" placeholder="Username">
+          </div>
+
+          <div style="margin-top:12px;">
+            <label>Password</label>
+            <input id="adminPass" type="password" placeholder="Password">
+          </div>
+
+          <div class="row" style="margin-top:14px;">
+            <button id="adminLoginBtn" class="btn" type="button" style="margin-top:0;">Login</button>
+            <button id="adminCancelBtn" class="btn secondary" type="button" style="margin-top:0;">Cancel</button>
+          </div>
+
+          <div class="hint" style="margin-top:10px;">
+            Note: This is a simple MVP lock (client-side). For real security, use backend auth.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="rightPane">
+
+      <div class="top">
+        <h2>⚽ Teams</h2>
+        <div class="pill" id="statusPill">Loading…</div>
+      </div>
+
+      <div class="grid" id="grid">
+        <div class="teamCard">
+          <div class="teamHeader">
+            <strong>Team A</strong>
+            <span id="countA">0</span>
+          </div>
+          <ul id="teamA" class="dropzone" data-team="A"></ul>
+        </div>
+
+        <div class="teamCard">
+          <div class="teamHeader">
+            <strong>Team B</strong>
+            <span id="countB">0</span>
+          </div>
+          <ul id="teamB" class="dropzone" data-team="B"></ul>
+        </div>
+      </div>
+
+      <div class="toast" id="toast"></div>
+
+    </div>
   </div>
-  
-  <div class="wrap">
-      
-    <!-- Visible alerts -->
-    <div id="alert" class="alert">
-      <div class="msg" id="alertMsg"></div>
-      <button class="x" id="alertClose" type="button">Close</button>
-    </div>
-
-    <div class="top">
-      <div class="brand">
-        <h1>⚽ Saturday Soccer</h1>
-        <div class="sub">Players vote • Admin creates poll • Fair teams</div>
-      </div>
-
-      <div class="top-right">
-        <div class="pill" id="pollPill">Loading…</div>
-        <a class="pill pill-link" id="pollGame" href="/game">🎮 Join Game</a>
-      </div>
-    </div>
-
-
-    <div class="seg">
-      <button id="tabPlayer" class="active" type="button">Player</button>
-      <button id="tabAdmin" type="button">Admin</button>
-    </div>
-
-    <!-- PLAYER VIEW -->
-    <div id="playerView">
-      <div class="card">
-        <h2>Player Vote</h2>
-        <div class="hint" id="playerHint">Enter name, choose YES/NO, set rating, submit.</div>
-
-        <div class="row">
-          <div class="col">
-            <label>First name</label>
-            <input id="firstName" type="text" placeholder="e.g., Romit" autocomplete="given-name">
-          </div>
-          <div class="col">
-            <label>Last name</label>
-            <input id="lastName" type="text" placeholder="e.g., Tajale" autocomplete="family-name">
-          </div>
-        </div>
-
-        <label>Playing this Saturday?</label>
-        <div class="choice">
-          <button id="btnYes" type="button">YES ✅</button>
-          <button id="btnNo" type="button">NO ❌</button>
-        </div>
-
-        <label>Secret</label>
-        <div class="ratingRow">
-          <input id="secret" type="text" placeholder="Enter secret">
-        </div>
-
-        <button id="btnSubmit" class="btn" type="button">Submit Vote</button>
-      </div>
-
-      <!-- Players can see teams -->
-      <div class="card">
-        <h2>Teams</h2>
-        <div class="hint">When teams are generated, everyone can view them here.</div>
-
-        <div class="stats">
-          <div class="stat">
-            <div class="k">YES count</div>
-            <div class="v" id="yesCountPlayer">0</div>
-          </div>
-          <div class="stat">
-            <div class="k">Generated at</div>
-            <div class="v" id="generatedAtPlayer">—</div>
-          </div>
-        </div>
-
-        <button id="btnTeamsPlayer" class="btn secondary" type="button">Refresh Teams</button>
-
-        <div class="teamsWrap" id="teamsWrapPlayer">
-          <div class="team">
-            <h3>Team A</h3>
-            <ul id="teamAPlayer"></ul>
-          </div>
-          <div class="team">
-            <h3>Team B</h3>
-            <ul id="teamBPlayer"></ul>
-          </div>
-        </div>
-
-        <div class="hint" id="teamsHintPlayer" style="margin-top:10px;">Tap “Refresh Teams” to view.</div>
-      </div>
-    </div>
-
-    <!-- ADMIN VIEW -->
-    <div id="adminView" style="display:none;">
-      <div class="card">
-        <h2>Create Poll</h2>
-        <div class="hint">
-          Pick the <b>Poll Date</b> (Saturday). Then pick <b>Poll End Date</b> from calendar and <b>Poll End Time</b>
-          from dropdown.
-          Example: end Friday at <b>8:00 PM</b>.
-        </div>
-
-        <label>Poll date (Saturday)</label>
-        <input id="pollDate" type="date">
-
-        <div class="row">
-          <div class="col">
-            <label>Poll end date</label>
-            <input id="endsDate" type="date">
-          </div>
-          <div class="col">
-            <label>Poll end time</label>
-            <select id="endsTime"></select>
-          </div>
-        </div>
-
-        <div class="stats">
-          <div class="stat">
-            <div class="k">Poll ends at</div>
-            <div class="v" id="endsPreview">—</div>
-          </div>
-          <div class="stat">
-            <div class="k">Countdown</div>
-            <div class="v" id="countdown">—</div>
-          </div>
-        </div>
-
-        <button id="btnCreatePoll" class="btn" type="button">Create Poll</button>
-        <button id="btnReload" class="btn secondary" type="button">Reload Poll Info</button>
-      </div>
-
-      <div class="card">
-        <h2>Team Generator</h2>
-        <div class="hint">Includes <b>all YES voters</b>. Shows YES count when you generate teams.</div>
-
-        <div class="stats">
-          <div class="stat">
-            <div class="k">YES count</div>
-            <div class="v" id="yesCountAdmin">0</div>
-          </div>
-          <div class="stat">
-            <div class="k">Generated at</div>
-            <div class="v" id="generatedAtAdmin">—</div>
-          </div>
-        </div>
-
-        <button id="btnTeamsAdmin" class="btn" type="button">Generate Teams</button>
-
-        <div class="teamsWrap" id="teamsWrapAdmin">
-          <div class="team">
-            <h3>Team A</h3>
-            <ul id="teamAAdmin"></ul>
-          </div>
-          <div class="team">
-            <h3>Team B</h3>
-            <ul id="teamBAdmin"></ul>
-          </div>
-        </div>
-
-        <div class="hint" id="teamsHintAdmin" style="margin-top:10px;">Generate teams to see the lineup.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Admin Login Modal -->
-  <div id="adminModal">
-    <div class="modalBox">
-      <div class="modalTop">
-        <div>
-          <div class="modalTitle">Admin Login</div>
-          <div class="modalSub">Enter credentials to access Admin tools.</div>
-        </div>
-        <button id="adminClose" class="iconBtn" type="button">✕</button>
-      </div>
-
-      <div style="margin-top:14px;">
-        <label>Username</label>
-        <input id="adminUser" type="text" placeholder="Username">
-      </div>
-
-      <div style="margin-top:12px;">
-        <label>Password</label>
-        <input id="adminPass" type="password" placeholder="Password">
-      </div>
-
-      <div class="row" style="margin-top:14px;">
-        <button id="adminLoginBtn" class="btn" type="button" style="margin-top:0;">Login</button>
-        <button id="adminCancelBtn" class="btn secondary" type="button" style="margin-top:0;">Cancel</button>
-      </div>
-
-      <div class="hint" style="margin-top:10px;">
-        Note: This is a simple MVP lock (client-side). For real security, use backend auth.
-      </div>
-    </div>
-  </div>
- 
-
 
   <script>
-    fetch("/teams.html")
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById("teamsContainer").innerHTML = html;
-        initTeams(); // 👈 THIS IS THE KEY
-      });
-  </script>
+    document.addEventListener("DOMContentLoaded", () => {
+      loadPollInfo();
 
+      pollId = p.id; 
+      const POLL_ID = "693c6a03560145abadba9298";
+      const BASE = `http://localhost:8080/api/v1/polls/${POLL_ID}`;
+
+      const GET_TEAMS_URL = `${BASE}/teams`;
+      const MOVE_PLAYER_URL = `${BASE}/teams/move`;
+
+      const grid = document.getElementById("grid");
+      const statusPill = document.getElementById("statusPill");
+      const toast = document.getElementById("toast");
+
+      let draggedUserId = null;
+      let fromTeam = null;
+
+      const placeholder = document.createElement("li");
+      placeholder.className = "placeholder";
+
+      function setBusy(on) {
+        grid.classList.toggle("busy", on);
+      }
+
+      function setStatus(text) {
+        statusPill.textContent = text;
+      }
+
+      function setToast(text) {
+        toast.textContent = text || "";
+      }
+
+      async function apiPost(url, body) {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body || {})
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Request failed");
+        return data;
+      }
+
+      async function loadTeams() {
+        setBusy(true);
+        setStatus("Loading…");
+        try {
+          const data = await apiPost(GET_TEAMS_URL);
+          renderTeam("teamA", data.teamA || [], "A");
+          renderTeam("teamB", data.teamB || [], "B");
+          countA.textContent = data.teamA?.length || 0;
+          countB.textContent = data.teamB?.length || 0;
+          setStatus("Ready");
+        } catch (e) {
+          setStatus("Error");
+          setToast(e.message);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      function renderTeam(id, players, teamLetter) {
+        const ul = document.getElementById(id);
+        ul.innerHTML = "";
+
+        players.forEach(p => {
+          const li = document.createElement("li");
+          li.className = "player";
+          li.draggable = true;
+          li.dataset.userId = p.userId;
+          li.dataset.team = teamLetter;
+
+          li.innerHTML = `
+        <span class="name">${p.firstName} ${p.lastName}</span>
+        <span class="meta">${p.position || ""}</span>
+      `;
+
+          li.addEventListener("dragstart", e => {
+            draggedUserId = p.userId;
+            fromTeam = teamLetter;
+            li.classList.add("dragging");
+            e.dataTransfer.setData("text/plain", p.userId);
+          });
+
+          li.addEventListener("dragend", () => {
+            li.classList.remove("dragging");
+            placeholder.remove();
+          });
+
+          ul.appendChild(li);
+        });
+      }
+
+      function getAfter(container, y) {
+        const els = [...container.querySelectorAll("li.player:not(.dragging)")];
+        return els.reduce((closest, el) => {
+          const box = el.getBoundingClientRect();
+          const offset = y - box.top - box.height / 2;
+          return offset < 0 && offset > closest.offset
+            ? { offset, el }
+            : closest;
+        }, { offset: -Infinity }).el;
+      }
+
+      document.querySelectorAll(".dropzone").forEach(zone => {
+        zone.addEventListener("dragover", e => {
+          e.preventDefault();
+          zone.classList.add("over");
+          const after = getAfter(zone, e.clientY);
+          after ? zone.insertBefore(placeholder, after) : zone.appendChild(placeholder);
+        });
+
+        zone.addEventListener("dragleave", () => {
+          zone.classList.remove("over");
+          placeholder.remove();
+        });
+
+        zone.addEventListener("drop", async e => {
+          e.preventDefault();
+          zone.classList.remove("over");
+          placeholder.remove();
+
+          const toTeam = zone.dataset.team;
+          if (!draggedUserId || fromTeam === toTeam) return;
+
+          setBusy(true);
+          try {
+            await apiPost(MOVE_PLAYER_URL, {
+              userId: draggedUserId,
+              fromTeam,
+              toTeam
+            });
+            await loadTeams();
+            setToast("✅ Teams updated");
+          } catch (err) {
+            setToast(err.message);
+            await loadTeams();
+          } finally {
+            setBusy(false);
+          }
+        });
+      });
+
+      loadTeams();
+    });
+  </script>
 
   <script>
     const API_BASE = "http://localhost:8080/api/v1";
@@ -1249,6 +1584,7 @@
       setInterval(() => { updateCountdown(); updateSubmitState(); }, 1000);
     })();
   </script>
+
 </body>
 
 </html>

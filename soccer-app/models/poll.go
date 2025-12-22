@@ -13,3 +13,13 @@ type Poll struct {
 	EndsAt    time.Time          `bson:"endsAt" json:"endsAt"`     // deadline
 	CreatedAt time.Time          `bson:"createdAt" json:"createdAt"`
 }
+
+type PollTeams struct {
+	ID          primitive.ObjectID `bson:"_id,omitempty"`
+	PollID      primitive.ObjectID `bson:"pollId"`
+	TeamA       []User             `bson:"teamA"`
+	TeamB       []User             `bson:"teamB"`
+	YesCount    int                `bson:"yesCount"`
+	GeneratedAt time.Time          `bson:"generatedAt"`
+	UpdatedAt   time.Time          `bson:"updatedAt"`
+}

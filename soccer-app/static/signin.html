@@ -120,7 +120,7 @@
 </div>
 
 <script>
-const API_BASE = "https://wraithlike-lena-heartaching.ngrok-free.dev/api/v1";
+const API_BASE = "http://localhost:8080/api/v1";
 const alertBox = document.getElementById("alert");
 
 function showAlert(msg, type) {
@@ -148,7 +148,9 @@ async function login() {
   try {
     const res = await fetch(`${API_BASE}/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json",
+           "ngrok-skip-browser-warning": "true"
+        },
       body: JSON.stringify({ firstName, lastName, secret })
     });
 
